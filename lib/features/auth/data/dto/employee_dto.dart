@@ -5,14 +5,15 @@ class EmployeeDto {
         name = j['fullName']?.toString() ?? j['username']?.toString() ?? '',
         email = j['email']?.toString() ?? '',
         phone = j['contact']?.toString() ?? '',
-        department = '', // Not in this response — might need separate endpoint
+        department = '',
         designation = (j['role'] is Map ? j['role']['value'] : j['role'])?.toString() ?? '',
         joiningDate = j['joiningDate'] != null
             ? DateTime.tryParse(j['joiningDate'].toString())
             : null,
         shiftStart = j['shiftStart']?.toString(),
         shiftEnd = j['shiftEnd']?.toString(),
-        locationBoundedAttendance = j['locationBoundedAttendance'] as bool? ?? false;
+        locationBoundedAttendance = j['locationBoundedAttendance'] as bool? ?? false,
+        role = j['role'] is Map ? j['role']['value']?.toString() ?? 'dealer' : 'dealer';
 
   final String id;
   final String employeeId;
@@ -25,4 +26,5 @@ class EmployeeDto {
   final String? shiftStart;
   final String? shiftEnd;
   final bool locationBoundedAttendance;
+  final String role;
 }

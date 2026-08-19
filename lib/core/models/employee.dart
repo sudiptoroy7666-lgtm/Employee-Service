@@ -9,8 +9,9 @@ class Employee {
     required this.designation,
     required this.joiningDate,
     this.profileImage,
-    this.shiftStart,  // Add this
-    this.shiftEnd,    // Add this
+    this.shiftStart,
+    this.shiftEnd,
+    this.role = 'dealer',
   });
 
   final String id;
@@ -22,10 +23,9 @@ class Employee {
   final String designation;
   final DateTime joiningDate;
   final String? profileImage;
-  final String? shiftStart;  // Add this
-  final String? shiftEnd;    // Add this
+  final String? shiftStart;
+  final String? shiftEnd;
+  final String role;
 
   String get firstName => name.split(' ').first;
-
-// ... rest of the class
 }

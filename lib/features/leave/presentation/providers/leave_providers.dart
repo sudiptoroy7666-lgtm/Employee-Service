@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/errors/failures.dart';
@@ -33,22 +31,11 @@ class LeaveRequestsController extends StateNotifier<AsyncValue<List<LeaveRequest
 
   Future<void> refresh() async {
     final prev = state;
-    if (prev is! AsyncData) {
-      state = const AsyncLoading();
-    }
-
+    state = const AsyncLoading();
     try {
-      final requests = await _repository.getRequests()
-          .timeout(const Duration(seconds: 12));
-      log('✅ Leave requests loaded: ${requests.length}');
-      state = AsyncData(requests);
+      state = AsyncData(await _repository.getRequests());
     } catch (e, st) {
-      log('⚠️ Leave requests refresh failed: $e');
-      if (prev is AsyncData<List<LeaveRequest>>) {
-        state = prev;
-      } else {
-        state = AsyncError(e, st);
-      }
+      state = prev is AsyncData<List<LeaveRequest>> ? prev : AsyncError(e, st);
     }
   }
 
@@ -56,13 +43,11 @@ class LeaveRequestsController extends StateNotifier<AsyncValue<List<LeaveRequest
     final prev = state;
     state = const AsyncLoading<List<LeaveRequest>>().copyWithPrevious(prev);
     try {
-      final created = await _repository.submitRequest(request)
-          .timeout(const Duration(seconds: 15));
+      final created = await _repository.submitRequest(request);
       final current = prev.valueOrNull ?? const <LeaveRequest>[];
       state = AsyncData([created, ...current]);
       _ref.invalidate(recentActivitiesProvider);
       _ref.invalidate(attendanceMonthProvider);
-      _ref.invalidate(leaveBalanceProvider);
     } catch (e) {
       state = prev;
       rethrow;

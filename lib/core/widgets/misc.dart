@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../models/attendance.dart';
 import '../theme/app_theme.dart';
 import '../utils/format_utils.dart';
 import 'cards.dart';
+
+import '../../../../features/notifications/presentation/providers/notification_providers.dart';
 
 /// Scaffold wrapper used by inner pages: canvas background + app bar + content width cap.
 class AppScaffold extends StatelessWidget {
@@ -94,7 +97,46 @@ class UserAvatar extends StatelessWidget {
   }
 }
 
+class NotificationButton extends ConsumerWidget {
+  const NotificationButton({super.key, this.light = false});
+  final bool light;
 
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unread = ref.watch(unreadCountProvider);
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          icon: Icon(
+            Icons.notifications_outlined,
+            color: light ? Colors.white : Theme.of(context).colorScheme.onSurface,
+          ),
+          onPressed: () => context.push('/notifications'),
+        ),
+        if (unread > 0)
+          Positioned(
+            right: 6,
+            top: 6,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              decoration: BoxDecoration(
+                color: AppColors.danger,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: Colors.white, width: 1.5),
+              ),
+              child: Text(
+                '$unread',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700, height: 1),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
 
 class MonthSelector extends StatelessWidget {
   const MonthSelector({super.key, required this.month, required this.onChanged, this.minMonth, this.maxMonth});
@@ -201,7 +243,40 @@ class TimelineEvent {
   final Color color;
 }
 
+/// Pulsing "live" indicator dot.
+class PulseDot extends StatefulWidget {
+  const PulseDot({super.key, this.color = AppColors.success, this.size = 8});
+  final Color color;
+  final double size;
 
+  @override
+  State<PulseDot> createState() => _PulseDotState();
+}
+
+class _PulseDotState extends State<PulseDot> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, __) => Opacity(
+        opacity: 0.45 + 0.55 * (1 - _c.value),
+        child: Container(
+          width: widget.size,
+          height: widget.size,
+          decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
+        ),
+      ),
+    );
+  }
+}
 
 AttendanceStatus? attendanceStatusFromCalendar(Map<DateTime, AttendanceStatus> calendar, DateTime date) =>
     calendar[DateUtils.dateOnly(date)];

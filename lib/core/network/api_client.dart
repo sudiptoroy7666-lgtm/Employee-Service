@@ -38,17 +38,14 @@ class ApiClient {
   final Dio _dio;
   Dio get dio => _dio;
 
-  /// ⚠️ INTERNAL TESTING ONLY
-  /// Accepts any TLS cert so the app can reach the private-IP backend.
+  /// ⚠️  DEV ONLY — accepts any TLS cert so the app can reach the private-IP backend.
+  /// The bypass only applies in debug builds; release builds enforce real certs.
   void _allowSelfSignedCerts() {
-    // 👇 COMMENT OUT THIS LINE SO IT RUNS IN RELEASE MODE
-    // if (!kDebugMode) return;
-
+    if (!kDebugMode) return;
     final adapter = _dio.httpClientAdapter;
     if (adapter is IOHttpClientAdapter) {
       adapter.createHttpClient = () {
         final client = HttpClient();
-        // Accept all certificates (INSECURE - Testing only!)
         client.badCertificateCallback = (cert, host, port) => true;
         return client;
       };

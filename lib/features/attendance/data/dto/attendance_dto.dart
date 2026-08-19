@@ -1,18 +1,12 @@
 class TodayAttendanceDto {
   TodayAttendanceDto.fromJson(Map<String, dynamic> j)
-      : checkInTime = j['checkInTime'] != null
-            ? DateTime.tryParse(j['checkInTime'].toString())
-            : null,
-        checkOutTime = j['checkOutTime'] != null
-            ? DateTime.tryParse(j['checkOutTime'].toString())
-            : null,
-        status = j['status']?.toString() ?? '';
+      : checkInTime = j['checkInTime'] != null ? DateTime.tryParse(j['checkInTime'].toString()) : null,
+        checkOutTime = j['checkOutTime'] != null ? DateTime.tryParse(j['checkOutTime'].toString()) : null,
+        status = j['status']?.toString() ?? j['state']?.toString() ?? 'not_checked_in';
 
   final DateTime? checkInTime;
   final DateTime? checkOutTime;
   final String status;
-
-  bool get isCheckedIn => checkInTime != null;
 }
 
 class AttendanceReportItemDto {

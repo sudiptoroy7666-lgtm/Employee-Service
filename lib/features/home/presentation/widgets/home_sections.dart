@@ -51,7 +51,7 @@ class TodaySummaryGrid extends ConsumerWidget {
           childAspectRatio: cross == 4 ? 2.4 : 1.5,
           children: [
             StatCard(
-              label: 'Status', // Adds line break in the middle
+              label: 'Attendance Status',
               value: !checkedIn ? 'Not checked in' : late ? 'Late' : 'Present',
               icon: late ? Icons.schedule_outlined : Icons.check_circle_outline,
               tint: !checkedIn ? AppColors.gray : late ? AppColors.warning : AppColors.success,
@@ -65,7 +65,7 @@ class TodaySummaryGrid extends ConsumerWidget {
               tint: AppColors.primary,
             ),
             StatCard(
-              label: 'Requests',
+              label: 'Pending Requests',
               value: '$pending Pending',
               icon: Icons.hourglass_top_outlined,
               tint: pending > 0 ? AppColors.warning : AppColors.gray,

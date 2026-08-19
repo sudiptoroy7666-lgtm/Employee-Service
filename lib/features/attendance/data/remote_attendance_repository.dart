@@ -35,7 +35,7 @@ class RemoteAttendanceRepository implements AttendanceRepository {
       'userId': userId,
       'startDate': first.toIso8601String(),
       'endDate': last.toIso8601String(),
-    }).timeout(const Duration(seconds: 10));
+    });
 
     final list = extractList(res.data);
     final records = list.map<AttendanceRecord>((j) {
@@ -90,40 +90,18 @@ class RemoteAttendanceRepository implements AttendanceRepository {
 
   @override
   Future<AttendanceRecord?> getRecordById(String id) async {
-    try {
-      final todayReport = await getMonthAttendance(DateTime.now())
-          .timeout(const Duration(seconds: 10));
-      return todayReport.records.where((r) => r.id == id).firstOrNull;
-    } catch (e) {
-      debugPrint('⚠️ getRecordById failed: $e');
-      return null;
-    }
+    // Re-use the month report — the UI only opens records that exist.
+    final todayReport = await getMonthAttendance(DateTime.now());
+    return todayReport.records.where((r) => r.id == id).firstOrNull;
   }
 
   @override
   Future<CheckInOutRecord> getToday() async {
+    final userId = await _userId();
     try {
-      final userId = await _userId();
-
-      final res = await _client.dio.get(
-        ApiEndpoints.attendanceToday,
-        queryParameters: {'userId': userId},
-      ).timeout(const Duration(seconds: 10));
-
+      final res = await _client.dio.get(ApiEndpoints.attendanceToday, queryParameters: {'userId': userId});
       final body = res.data;
-      debugPrint('📥 getToday() raw response: $body');
-
-      if (body is! Map<String, dynamic>) {
-        debugPrint('⚠️ getToday() response is not a Map');
-        return CheckInOutRecord(
-          id: 'cio-today',
-          employeeId: userId,
-          date: DateUtils.dateOnly(DateTime.now()),
-        );
-      }
-
-      final dto = TodayAttendanceDto.fromJson(body);
-
+      final dto = TodayAttendanceDto.fromJson(body is Map<String, dynamic> ? body : const {});
       return CheckInOutRecord(
         id: 'cio-today',
         employeeId: userId,
@@ -131,15 +109,16 @@ class RemoteAttendanceRepository implements AttendanceRepository {
         checkInTime: dto.checkInTime,
         checkOutTime: dto.checkOutTime,
       );
-    } catch (e) {
-      debugPrint('❌ getToday() failed: $e');
+    } catch (_) {
+      // If the endpoint is unavailable, treat the day as not started.
       return CheckInOutRecord(
         id: 'cio-today',
-        employeeId: '',
+        employeeId: userId,
         date: DateUtils.dateOnly(DateTime.now()),
       );
     }
   }
+
 
   @override
   Future<CheckInOutRecord> checkIn() async {
@@ -148,23 +127,16 @@ class RemoteAttendanceRepository implements AttendanceRepository {
 
     try {
       final res = await _client.dio.post(ApiEndpoints.checkIn, data: {
-        'latitude': loc['latitude'].toString(),
+        'latitude': loc['latitude'].toString(),  // Send as string per backend spec
         'longitude': loc['longitude'].toString(),
       });
 
       if (res.statusCode == 201 || res.statusCode == 200) {
-        final body = res.data;
-        
-        DateTime? serverTime;
-        if (body is Map<String, dynamic> && body['checkInTime'] != null) {
-          serverTime = DateTime.tryParse(body['checkInTime'].toString());
-        }
-
         return CheckInOutRecord(
           id: 'cio-today',
           employeeId: userId,
           date: DateUtils.dateOnly(DateTime.now()),
-          checkInTime: serverTime ?? DateTime.now(),
+          checkInTime: DateTime.now(),
         );
       }
 
@@ -173,25 +145,10 @@ class RemoteAttendanceRepository implements AttendanceRepository {
       final errorBody = e.response?.data;
       if (errorBody is Map && errorBody['error'] != null) {
         final errorMsg = errorBody['error'].toString();
-        final errorMsgLower = errorMsg.toLowerCase();
 
-        if (errorMsgLower.contains('not within the office')) {
+        if (errorMsg.contains('not within the office')) {
           throw const AppFailure(
             'You are not within the office location. Please move closer to the office and try again.',
-          );
-        }
-
-        // ✅ Bypass weekend/holiday restrictions
-        if (errorMsgLower.contains('weekend') ||
-            errorMsgLower.contains('holiday') ||
-            errorMsgLower.contains('day off') ||
-            errorMsgLower.contains('non-working')) {
-          debugPrint('⚠️ Backend rejected check-in (weekend/holiday), creating local record');
-          return CheckInOutRecord(
-            id: 'cio-today',
-            employeeId: userId,
-            date: DateUtils.dateOnly(DateTime.now()),
-            checkInTime: DateTime.now(),
           );
         }
 
@@ -205,33 +162,25 @@ class RemoteAttendanceRepository implements AttendanceRepository {
   Future<CheckInOutRecord> checkOut() async {
     final userId = await _userId();
     final loc = await _location.getCheckInLocation();
+    final current = await getToday();
+
+    if (current.checkInTime == null) {
+      throw const AppFailure('You have not checked in today. Please check in first.');
+    }
 
     try {
-      // 👇 Call check-out API directly — let the BACKEND validate if checked in
       final res = await _client.dio.patch(ApiEndpoints.checkOut, data: {
         'latitude': loc['latitude'].toString(),
         'longitude': loc['longitude'].toString(),
       });
 
       if (res.statusCode == 200) {
-        final body = res.data;
-        
-        DateTime? serverTime;
-        if (body is Map<String, dynamic> && body['checkOutTime'] != null) {
-          serverTime = DateTime.tryParse(body['checkOutTime'].toString());
-        }
-
-        DateTime? serverCheckIn;
-        if (body is Map<String, dynamic> && body['checkInTime'] != null) {
-          serverCheckIn = DateTime.tryParse(body['checkInTime'].toString());
-        }
-
         return CheckInOutRecord(
           id: 'cio-today',
           employeeId: userId,
           date: DateUtils.dateOnly(DateTime.now()),
-          checkInTime: serverCheckIn ?? DateTime.now().subtract(const Duration(hours: 8)),
-          checkOutTime: serverTime ?? DateTime.now(),
+          checkInTime: current.checkInTime,
+          checkOutTime: DateTime.now(),
         );
       }
 
@@ -240,30 +189,14 @@ class RemoteAttendanceRepository implements AttendanceRepository {
       final errorBody = e.response?.data;
       if (errorBody is Map && errorBody['error'] != null) {
         final errorMsg = errorBody['error'].toString();
-        final errorMsgLower = errorMsg.toLowerCase();
 
-        // 👇 Backend says no check-in found — show proper error
-        if (errorMsgLower.contains('no check-in found') || errorMsgLower.contains('not checked in')) {
+        if (errorMsg.contains('No check-in found')) {
           throw const AppFailure('No check-in record found for today. Please check in first.');
         }
 
-        if (errorMsgLower.contains('not within the office')) {
+        if (errorMsg.contains('not within the office')) {
           throw const AppFailure(
             'You are not within the office location. Please move closer to the office and try again.',
-          );
-        }
-
-        // ✅ Bypass weekend/holiday restrictions
-        if (errorMsgLower.contains('weekend') ||
-            errorMsgLower.contains('holiday') ||
-            errorMsgLower.contains('day off') ||
-            errorMsgLower.contains('non-working')) {
-          debugPrint('⚠️ Backend rejected check-out (weekend/holiday), creating local record');
-          return CheckInOutRecord(
-            id: 'cio-today',
-            employeeId: userId,
-            date: DateUtils.dateOnly(DateTime.now()),
-            checkOutTime: DateTime.now(),
           );
         }
 

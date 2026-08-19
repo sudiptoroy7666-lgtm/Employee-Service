@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../widgets/office_map_card.dart';
+
+import '../../../../core/providers/app_providers.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/cards.dart';
@@ -19,7 +20,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final employee = ref.watch(authControllerProvider).valueOrNull;
-   // final now = ref.watch(clockProvider).valueOrNull ?? DateTime.now();
+    final now = ref.watch(clockProvider).valueOrNull ?? DateTime.now();
     final name = employee?.firstName ?? 'there';
 
     return Scaffold(
@@ -28,10 +29,7 @@ class HomeScreen extends ConsumerWidget {
           ref.invalidate(attendanceMonthProvider);
           ref.invalidate(recentActivitiesProvider);
           ref.invalidate(leaveBalanceProvider);
-          await Future.wait([
-            ref.read(todayAttendanceProvider.notifier).refresh(),
-            ref.read(leaveRequestsProvider.notifier).refresh(),
-          ]);
+          await ref.read(leaveRequestsProvider.notifier).refresh();
         },
         child: ListView(
           padding: EdgeInsets.zero,
@@ -57,7 +55,7 @@ class HomeScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '${Fmt.greeting(DateTime.now())}, $name', // 👈 USE DateTime.now() directly
+                                  '${Fmt.greeting(now)}, $name',
                                   style: GoogleFontsSora.size22.copyWith(fontSize: 21, color: Colors.white),
                                 ),
                                 const SizedBox(height: 4),
@@ -68,6 +66,8 @@ class HomeScreen extends ConsumerWidget {
                               ],
                             ),
                           ),
+                          const NotificationButton(light: true),
+                          const SizedBox(width: 2),
                           InkWell(
                             borderRadius: BorderRadius.circular(999),
                             onTap: () => context.push('/profile'),
@@ -91,9 +91,6 @@ class HomeScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ✅ NEW: Office Map
-                      Reveal(child: OfficeMapCard()),
-                      SizedBox(height: 16),
                       SectionHeader(title: "Today's Summary"),
                       Reveal(delay: Duration(milliseconds: 60), child: TodaySummaryGrid()),
                       SectionHeader(title: 'Monthly Attendance'),

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/buttons.dart';
 import '../../../../core/widgets/cards.dart';
 import '../../../../core/widgets/misc.dart';
+import '../../../../core/widgets/sheets.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
@@ -78,14 +80,20 @@ class HelpSupportScreen extends StatelessWidget {
             );
           }),
           const SectionHeader(title: 'Contact'),
-          const Reveal(
-            delay: Duration(milliseconds: 220),
+          Reveal(
+            delay: const Duration(milliseconds: 220),
             child: AppCard(
               child: Column(
                 children: [
-                  InfoRow(label: 'Email', value: AppConstants.supportEmail, icon: Icons.email_outlined),
-                  Divider(height: 18),
-                  InfoRow(label: 'Phone', value: AppConstants.supportPhone, icon: Icons.phone_outlined),
+                  const InfoRow(label: 'Email', value: AppConstants.supportEmail, icon: Icons.email_outlined),
+                  const Divider(height: 18),
+                  const InfoRow(label: 'Phone', value: AppConstants.supportPhone, icon: Icons.phone_outlined),
+                  const SizedBox(height: 14),
+                  PrimaryButton(
+                    label: 'Contact Support',
+                    icon: Icons.chat_bubble_outline,
+                    onPressed: () => AppSnack.success(context, 'Your request has been sent to HR support.'),
+                  ),
                 ],
               ),
             ),

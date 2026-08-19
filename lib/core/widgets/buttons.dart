@@ -25,7 +25,7 @@ class PrimaryButton extends StatelessWidget {
         onPressed: loading ? null : onPressed,
         child: loading
             ? const SizedBox(
-          width: 15,
+          width: 22,
           height: 22,
           child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
         )
@@ -34,15 +34,7 @@ class PrimaryButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[Icon(icon, size: 20), const SizedBox(width: 10)],
-            // ✅ FIX: Wrap text in Flexible to prevent overflow
-            Flexible(
-              child: Text(
-                label.toUpperCase(),
-                style: const TextStyle(letterSpacing: 0.8),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ),
+            Text(label.toUpperCase(), style: const TextStyle(letterSpacing: 0.8)),
           ],
         ),
       ),
@@ -67,14 +59,7 @@ class SecondaryButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[Icon(icon, size: 20), const SizedBox(width: 10)],
-            // ✅ FIX: Wrap text in Flexible to prevent overflow
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ),
+            Text(label),
           ],
         ),
       ),

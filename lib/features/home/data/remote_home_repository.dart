@@ -42,7 +42,7 @@ class RemoteHomeRepository implements HomeRepository {
       final res = await _client.dio.get(
         ApiEndpoints.attendanceToday,
         queryParameters: {'userId': userId},
-      ).timeout(const Duration(seconds: 10));
+      );
       final body = res.data;
       final dto = TodayAttendanceDto.fromJson(body is Map<String, dynamic> ? body : const {});
       final items = <ActivityItem>[];

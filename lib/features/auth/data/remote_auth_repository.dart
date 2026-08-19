@@ -16,11 +16,12 @@ class RemoteAuthenticationRepository implements AuthenticationRepository {
 
   @override
   Future<Employee> login(String idOrEmail, String password) async {
-    // Step 1: Login and get tokens
+    debugPrint('🛰️ Attempting API Login for: $idOrEmail');
+    
     final loginRes = await _client.dio.post(
       ApiEndpoints.login,
       data: {'username': idOrEmail, 'password': password},
-    );
+    ).timeout(const Duration(seconds: 10));
 
     if (loginRes.statusCode != 200 && loginRes.statusCode != 201) {
       throw const AuthFailure('Login failed. Please check your credentials.');
@@ -33,27 +34,18 @@ class RemoteAuthenticationRepository implements AuthenticationRepository {
       throw const AuthFailure('Server did not return an auth token.');
     }
 
-    // Store tokens immediately so subsequent requests are authenticated
     await _storage.write(
       token: auth.accessToken,
       refreshToken: auth.refreshToken,
       userId: auth.id,
     );
 
-    // Step 2: Fetch full employee profile
-    final employee = await _fetchCurrentUser(auth.id);
-
+    final employee = await _fetchCurrentUser(auth.id, auth);
+    debugPrint('✅ API Login Successful for: ${employee.name}');
     return employee;
   }
 
-  @override
-  Future<Employee> getCurrentUser() async {
-    final userId = await _storage.readUserId();
-    if (userId == null || userId.isEmpty) throw const AuthFailure('Not authenticated.');
-    return _fetchCurrentUser(userId);
-  }
-
-  Future<Employee> _fetchCurrentUser(String userId) async {
+  Future<Employee> _fetchCurrentUser(String userId, LoginResponseDto auth) async {
     try {
       final res = await _client.dio.get(
         ApiEndpoints.employees,
@@ -62,48 +54,57 @@ class RemoteAuthenticationRepository implements AuthenticationRepository {
 
       final body = res.data;
       if (body is Map<String, dynamic>) {
-        final dto = EmployeeDto.fromJson(body);
+        // BULLETPROOF ROLE PARSING: Handles both String and Object {"id": 8, "value": "Sales Executive"}
+        String parsedRole = '';
+        final rawRole = body['role'];
+        if (rawRole is String) {
+          parsedRole = rawRole;
+        } else if (rawRole is Map<String, dynamic>) {
+          parsedRole = rawRole['value']?.toString() ?? rawRole['name']?.toString() ?? '';
+        }
+
+        // Fallback to login response role if API role is empty
+        if (parsedRole.isEmpty) parsedRole = auth.role;
+
+        debugPrint('✅ Parsed Role: $parsedRole for ${body['fullName']}');
+
         return Employee(
-          id: dto.id,
-          employeeId: dto.employeeId,
-          name: dto.name,
-          email: dto.email,
-          phone: dto.phone,
-          department: dto.department.isNotEmpty ? dto.department : 'Engineering', // fallback
-          designation: dto.designation.isNotEmpty ? dto.designation : 'Employee', // fallback
-          joiningDate: dto.joiningDate ?? DateTime(2020, 1, 1),
-          shiftStart: dto.shiftStart,  // Pass through
-          shiftEnd: dto.shiftEnd,      // Pass through
+          id: body['id']?.toString() ?? auth.id,
+          employeeId: body['employeeId']?.toString() ?? auth.employeeId,
+          name: body['fullName']?.toString() ?? auth.fullName,
+          email: body['email']?.toString() ?? auth.username,
+          phone: body['contact']?.toString() ?? '',
+          department: body['department']?.toString() ?? 'Field',
+          designation: parsedRole, // Map parsed role to designation too
+          joiningDate: DateTime.tryParse(body['joiningDate']?.toString() ?? '') ?? DateTime(2020, 1, 1),
+          shiftStart: body['shiftStart']?.toString(),
+          shiftEnd: body['shiftEnd']?.toString(),
+          role: parsedRole,
         );
       }
     } catch (e) {
-      // If profile fetch fails, return minimal data from login response
       debugPrint('⚠️ Failed to fetch employee profile: $e');
     }
 
-    // Fallback: minimal employee from login response
+    // Fallback uses the rich data from the login response
     return Employee(
-      id: userId,
-      employeeId: '',
-      name: 'Employee',
-      email: '',
+      id: auth.id,
+      employeeId: auth.employeeId,
+      name: auth.fullName,
+      email: auth.username,
       phone: '',
       department: '',
-      designation: '',
+      designation: auth.role,
       joiningDate: DateTime(2020, 1, 1),
-
+      role: auth.role,
     );
   }
-
 
   @override
   Future<void> logout() async {
     try {
       await _client.dio.post(ApiEndpoints.logout);
-    } catch (_) {
-      // ignore — even if logout fails server-side we still clear locally
-    } finally {
-      await _storage.clear();
-    }
+    } catch (_) {}
+    await _storage.clear();
   }
 }

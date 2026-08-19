@@ -7,6 +7,8 @@ class CheckInOutRecord {
     required this.date,
     this.checkInTime,
     this.checkOutTime,
+    this.breakStart,
+    this.breakEnd,
   });
 
   final String id;
@@ -14,6 +16,8 @@ class CheckInOutRecord {
   final DateTime date;
   final DateTime? checkInTime;
   final DateTime? checkOutTime;
+  final DateTime? breakStart;
+  final DateTime? breakEnd;
 
   WorkdayStatus get status {
     if (checkInTime == null) return WorkdayStatus.notStarted;
@@ -27,15 +31,13 @@ class CheckInOutRecord {
     return end.difference(checkInTime!).inMinutes;
   }
 
-  CheckInOutRecord copyWith({
-    String? employeeId,
-    DateTime? checkInTime,
-    DateTime? checkOutTime,
-  }) => CheckInOutRecord(
+  CheckInOutRecord copyWith({DateTime? checkInTime, DateTime? checkOutTime}) => CheckInOutRecord(
     id: id,
-    employeeId: employeeId ?? this.employeeId,
+    employeeId: employeeId,
     date: date,
     checkInTime: checkInTime ?? this.checkInTime,
     checkOutTime: checkOutTime ?? this.checkOutTime,
+    breakStart: breakStart,
+    breakEnd: breakEnd,
   );
 }

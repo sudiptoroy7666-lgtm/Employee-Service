@@ -1,8 +1,7 @@
 import 'dart:math' as math;
-import 'package:permission_handler/permission_handler.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../../../../core/models/check_in_out.dart';
@@ -16,7 +15,6 @@ import '../../../../core/widgets/misc.dart';
 import '../../../../core/widgets/sheets.dart';
 import '../../../../core/widgets/states.dart';
 import '../providers/attendance_providers.dart';
-import 'location_rationale_screen.dart';
 
 class CheckInOutScreen extends ConsumerWidget {
   const CheckInOutScreen({super.key});
@@ -33,8 +31,21 @@ class CheckInOutScreen extends ConsumerWidget {
         loading: () => ListView(padding: const EdgeInsets.all(16), children: const [LoadingSkeleton(blocks: 2)]),
         error: (e, _) => ErrorStateWidget(error: e),
         data: (record) {
-          final status = record.status;
-          final workingMinutes = record.workingMinutes(now);
+          final effectiveCheckIn = record.checkInTime;
+          final effectiveCheckOut = record.checkOutTime;
+
+          final effectiveRecord = CheckInOutRecord(
+            id: record.id,
+            employeeId: record.employeeId,
+            date: record.date,
+            checkInTime: effectiveCheckIn,
+            checkOutTime: effectiveCheckOut,
+            breakStart: record.breakStart,
+            breakEnd: record.breakEnd,
+          );
+
+          final status = effectiveRecord.status;
+          final workingMinutes = effectiveRecord.workingMinutes(now);
           final progress = math.min(1.0, workingMinutes / (9 * 60));
 
           return ListView(
@@ -45,7 +56,7 @@ class CheckInOutScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
-                      Text(Fmt.dateFull(record.date), style: theme.textTheme.titleMedium),
+                      Text(Fmt.dateFull(effectiveRecord.date), style: theme.textTheme.titleMedium),
                       const SizedBox(height: 6),
                       Text(
                         Fmt.time(now),
@@ -127,9 +138,13 @@ class CheckInOutScreen extends ConsumerWidget {
                       const SizedBox(height: 16),
                       ActivityTimeline(
                         events: [
-                          if (record.checkInTime != null)
-                            TimelineEvent(time: record.checkInTime!, label: 'Checked In', icon: Icons.login_rounded, color: AppColors.primary),
-                          if (record.checkOutTime != null)
+                          if (effectiveRecord.checkInTime != null)
+                            TimelineEvent(time: effectiveRecord.checkInTime!, label: 'Checked In', icon: Icons.login_rounded, color: AppColors.primary),
+                          if (effectiveRecord.breakStart != null)
+                            TimelineEvent(time: effectiveRecord.breakStart!, label: 'Break Started', icon: Icons.coffee_outlined, color: AppColors.warning),
+                          if (effectiveRecord.breakEnd != null)
+                            TimelineEvent(time: effectiveRecord.breakEnd!, label: 'Break Ended', icon: Icons.play_arrow_rounded, color: AppColors.success),
+                          if (effectiveRecord.checkOutTime != null)
                             TimelineEvent(time: record.checkOutTime!, label: 'Checked Out', icon: Icons.logout_rounded, color: AppColors.navy),
                         ],
                       ),
@@ -185,116 +200,16 @@ class CheckInOutScreen extends ConsumerWidget {
       ),
     );
   }
+
   Future<void> _checkIn(BuildContext context, WidgetRef ref) async {
-    debugPrint('👆 User tapped CHECK IN button');
-
-    // Show loading snackbar
-    if (context.mounted) {
-      AppSnack.info(context, '📍 Getting your location... (may take 30s first time)');
-    }
-
     try {
       await ref.read(todayAttendanceProvider.notifier).checkIn();
-      if (context.mounted) {
-        AppSnack.success(context, '✅ Checked in successfully — have a great day!');
-      }
+      if (context.mounted) AppSnack.success(context, 'Checked in — have a great day!');
     } on AppFailure catch (e) {
-      debugPrint('❌ Check-in failed with AppFailure: ${e.message}');
-      if (context.mounted) {
-        // Show detailed error in a dialog for better readability
-        if (e.message.contains('permission') ||
-            e.message.contains('Location') ||
-            e.message.contains('GPS') ||
-            e.message.contains('location')) {
-          _showLocationErrorDialog(context, e.message);
-        } else {
-          AppSnack.error(context, e.message);
-        }
-      }
-    } catch (e) {
-      debugPrint('❌ Check-in failed with unexpected error: $e');
-      if (context.mounted) {
-        AppSnack.error(context, 'Unexpected error: $e');
-      }
+      if (context.mounted) AppSnack.error(context, e.message);
     }
   }
 
-  void _showLocationErrorDialog(BuildContext context, String message) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.location_off, color: Colors.red),
-            SizedBox(width: 8),
-            Text('Location Issue'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(message),
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 8),
-              const Text(
-                'Quick fixes:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              _FixStep(number: 1, text: 'Open device Settings → Location → Turn ON'),
-              _FixStep(number: 2, text: 'Settings → Apps → WorkPulse → Permissions → Location → "Allow all the time"'),
-              _FixStep(number: 3, text: 'Make sure "Use precise location" is ON (Android 12+)'),
-              _FixStep(number: 4, text: 'Go near a window or outdoors for 30 seconds'),
-              _FixStep(number: 5, text: 'Toggle Airplane mode ON then OFF'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              openAppSettings();
-            },
-            child: const Text('Open Settings'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLocationPermissionDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Location Permission Needed'),
-        content: const Text(
-          'Check-in requires location access. Please enable location permissions in your device settings.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              openAppSettings();
-            },
-            child: const Text('Open Settings'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ✅ FIXED: Now also checks for permission/location errors
   Future<void> _confirmCheckOut(BuildContext context, WidgetRef ref, CheckInOutRecord record, DateTime now) async {
     final confirmed = await ConfirmationBottomSheet.show(
       context,
@@ -325,54 +240,7 @@ class CheckInOutScreen extends ConsumerWidget {
       await ref.read(todayAttendanceProvider.notifier).checkOut();
       if (context.mounted) AppSnack.success(context, 'Checked out — workday completed. Well done!');
     } on AppFailure catch (e) {
-      if (context.mounted) {
-        if (e.message.contains('permission') || e.message.contains('location')) {
-          _showLocationPermissionDialog(context);
-        } else {
-          AppSnack.error(context, e.message);
-        }
-      }
+      if (context.mounted) AppSnack.error(context, e.message);
     }
-  }
-}
-
-class _FixStep extends StatelessWidget {
-  final int number;
-  final String text;
-
-  const _FixStep({required this.number, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 20,
-            height: 20,
-            decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '$number',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(text, style: const TextStyle(fontSize: 13)),
-          ),
-        ],
-      ),
-    );
   }
 }

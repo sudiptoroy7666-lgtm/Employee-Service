@@ -24,23 +24,31 @@ class AppCard extends StatefulWidget {
 }
 
 class _AppCardState extends State<AppCard> {
+  bool _hover = false;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
-      margin: widget.margin,
-      decoration: BoxDecoration(
-        color: widget.color ?? scheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
-        boxShadow: AppShadows.card,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        margin: widget.margin,
+        transform: Matrix4.identity()..translateByDouble(0.0, _hover ? -2.0 : 0.0, 0.0, 1.0),
+        decoration: BoxDecoration(
+          color: widget.color ?? scheme.surface,
           borderRadius: BorderRadius.circular(16),
-          onTap: widget.onTap,
-          child: Padding(padding: widget.padding, child: widget.child),
+          border: Border.all(color: Theme.of(context).dividerColor),
+          boxShadow: _hover ? AppShadows.raised : AppShadows.card,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: widget.onTap,
+            child: Padding(padding: widget.padding, child: widget.child),
+          ),
         ),
       ),
     );
@@ -94,12 +102,10 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Semantics(
-      label: '$label: $value',
-      child: AppCard(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
+    return AppCard(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
           Container(
             width: 34,
             height: 34,
@@ -111,21 +117,17 @@ class StatCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    value,
-                    maxLines: 1,
-                    style: GoogleFontsSora.size18.copyWith(color: valueColor ?? theme.textTheme.bodyLarge?.color),
-                  ),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFontsSora.size18.copyWith(color: valueColor ?? theme.textTheme.bodyLarge?.color),
                 ),
                 Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.labelMedium?.copyWith(color: AppColors.textSecondary)),
               ],
             ),
           ),
         ],
-      ),
       ),
     );
   }
@@ -148,30 +150,26 @@ class QuickActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Semantics(
-      button: true,
-      label: label,
-      child: AppCard(
-        onTap: onTap,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(color: tint.withValues(alpha: 0.13), borderRadius: BorderRadius.circular(13)),
-              child: Icon(icon, size: 21, color: tint),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
+    return AppCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(color: tint.withValues(alpha: 0.13), borderRadius: BorderRadius.circular(13)),
+            child: Icon(icon, size: 21, color: tint),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ],
       ),
     );
   }
