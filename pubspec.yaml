@@ -15,30 +15,22 @@ dependencies:
   google_fonts: ^6.2.1
   intl: ^0.19.0
   dio: ^5.4.3
-  flutter_secure_storage: ^9.2.2     # store auth tokens safely
-  geolocator: ^12.0.0                # check-in / check-out need lat+lng
-  permission_handler: ^11.3.1        # ask for location permission
+  flutter_secure_storage: ^9.2.2
+  geolocator: ^12.0.0
+  permission_handler: ^11.3.1
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
-  shared_preferences: ^2.2.3         # NEW: For local leave cache
-  uuid: ^4.3.3                        # NEW: Idempotency keys for leave requests
-  connectivity_plus: ^6.0.3           # NEW: Network state detection
+  connectivity_plus: ^6.0.3
+  shared_preferences: ^2.2.3
+  uuid: ^4.3.3
+  url_launcher: ^6.2.5
+  image_picker: ^1.0.7
+  fl_chart: ^0.68.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-
-
-# 👇 Add this section at the very bottom of pubspec.yaml
-flutter_native_splash:
-  color: "#155EEF"
-  android: true
-  image: assets/icon.png   # 👈 Your logo here
-  ios: true
-  fullscreen: true
-  # If you have an app icon image (e.g., assets/icon.png), you can uncomment the next line:
-  # image: assets/icon.png
 
 flutter:
   uses-material-design: true

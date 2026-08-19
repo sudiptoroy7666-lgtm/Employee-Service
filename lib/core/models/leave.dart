@@ -60,7 +60,6 @@ class LeaveRequest {
     this.reviewerName,
     this.reviewerComment,
     this.reviewedAt,
-    this.isLocalOnly = false,
   });
 
   final String id;
@@ -75,7 +74,6 @@ class LeaveRequest {
   final String? reviewerName;
   final String? reviewerComment;
   final DateTime? reviewedAt;
-  final bool isLocalOnly;
 }
 
 class LeaveBalance {

@@ -11,8 +11,7 @@ class RemoteProfileRepository implements ProfileRepository {
 
   @override
   Future<Employee> getProfile() async {
-    final res = await _client.dio.get(ApiEndpoints.me)
-        .timeout(const Duration(seconds: 10));
+    final res = await _client.dio.get(ApiEndpoints.me);
     final body = res.data;
     if (body is Map<String, dynamic>) {
       final dto = EmployeeDto.fromJson(body);

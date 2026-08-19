@@ -32,13 +32,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _loading = true);
+
+    final username = _idController.text.trim();
+    final password = _passwordController.text;
+
     try {
-      await ref.read(authControllerProvider.notifier).login(_idController.text.trim(), _passwordController.text);
-      // Router redirect navigates to /home automatically.
-    } on AppFailure catch (e) {
+      // Call the AuthController which hits POST /api/auth/login
+      // The backend returns the user's role automatically
+      await ref.read(authControllerProvider.notifier).login(username, password);
+
+      if (mounted) {
+        AppSnack.success(context, 'Welcome back!');
+        // Router will automatically redirect to /dashboard or /unsupported-role
+        // based on the returned role
+      }
+    } on AuthFailure catch (e) {
       if (mounted) AppSnack.error(context, e.message);
-    } catch (_) {
+    } catch (e) {
       if (mounted) AppSnack.error(context, 'Sign in failed. Please try again.');
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -109,32 +121,39 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _passwordController,
-                        validator: _validatePassword,
-                        obscureText: _obscure,
-                        textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _submit(),
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          prefixIcon: const Icon(Icons.lock_outline),
-                          suffixIcon: IconButton(
-                            icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-                            onPressed: () => setState(() => _obscure = !_obscure),
-                          ),
+                       TextFormField(
+                         controller: _passwordController,
+                         validator: _validatePassword,
+                         obscureText: _obscure,
+                         textInputAction: TextInputAction.done,
+                         onFieldSubmitted: (_) => _submit(),
+                         decoration: InputDecoration(
+                           labelText: 'Password',
+                           prefixIcon: const Icon(Icons.lock_outline),
+                           suffixIcon: IconButton(
+                             icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                             onPressed: () => setState(() => _obscure = !_obscure),
+                           ),
+                         ),
                         ),
-                      ),
-                    ],
+                      ],
+                   ),
+                 ),
+                 Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => AppSnack.info(context, 'Password reset is handled by HR — contact ${AppConstants.supportEmail}.'),
+                    child: const Text('Forgot password?'),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 PrimaryButton(
                   label: _loading ? 'Signing in…' : 'Login',
                   loading: _loading,
                   onPressed: _submit,
                   icon: Icons.login_rounded,
                 ),
-
+                const SizedBox(height: 22),
                 const SizedBox(height: 36),
                 Center(
                   child: Text(

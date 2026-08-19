@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/models/payment.dart';
@@ -21,29 +23,50 @@ class RemotePaymentRepository implements PaymentRepository {
   @override
   Future<List<PaymentBill>> getPayments() async {
     final userId = await _userId();
-    final res = await _client.dio.get(ApiEndpoints.payroll, queryParameters: {'userId': userId, 'limit': 24})
-        .timeout(const Duration(seconds: 10));
-    final list = extractList(res.data);
-    final bills = list.map<PaymentBill>((j) {
-      final d = PaymentBillDto.fromJson(j as Map<String, dynamic>);
-      return PaymentBill(
-        id: d.id,
-        employeeId: userId,
-        paymentMonth: DateTime(d.year, d.month), // Numeric month
-        currency: 'BDT', // Backend is in Bangladesh (Taka)
-        grossAmount: d.grossAmount,
-        allowances: 0, // Not provided
-        bonuses: 0,
-        deductions: d.unpaidDeduction,
-        tax: 0, // Not provided
-        netAmount: d.netAmount,
-        status: _mapStatus(d.status),
-        paymentDate: d.paymentDate,
-        referenceId: null,
+
+    try {
+      final res = await _client.dio.get(
+        ApiEndpoints.payroll,
+        queryParameters: {'employeeId': userId, 'limit': 24}, // Changed userId to employeeId
       );
-    }).toList();
-    bills.sort((a, b) => b.paymentMonth.compareTo(a.paymentMonth));
-    return bills;
+
+      debugPrint('💰 Payroll response status: ${res.statusCode}, data: ${res.data}');
+
+      final list = extractList(res.data);
+
+      if (list.isEmpty) return [];
+
+      final bills = list.map<PaymentBill>((j) {
+        final d = PaymentBillDto.fromJson(j as Map<String, dynamic>);
+        return PaymentBill(
+          id: d.id,
+          employeeId: userId,
+          paymentMonth: DateTime(d.year, d.month),
+          currency: 'BDT',
+          grossAmount: d.grossAmount,
+          allowances: 0,
+          bonuses: 0,
+          deductions: d.unpaidDeduction,
+          tax: 0,
+          netAmount: d.netAmount,
+          status: _mapStatus(d.status),
+          paymentDate: d.paymentDate,
+          referenceId: null,
+        );
+      }).toList();
+
+      bills.sort((a, b) => b.paymentMonth.compareTo(a.paymentMonth));
+      return bills;
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
+      debugPrint('getPayments failed: status=$statusCode');
+
+      if (statusCode == 404) {
+        return [];
+      }
+
+      throw const AppFailure('Unable to load payment records. Please try again later.');
+    }
   }
 
   @override

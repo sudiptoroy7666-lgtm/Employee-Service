@@ -1,322 +1,786 @@
-# 📱 WorkPulse — Employee Self-Service Mobile App
-
-> A production-grade Flutter application for employee attendance management, leave requests, payroll viewing, and company notifications. Built with Riverpod, GoRouter, and Clean Architecture principles.
+# 📱 WorkPulse — Sales + Attendance Management System
+## Complete Project Documentation & Handover Report
 
 ---
 
 ## 📋 Table of Contents
 
-1. [Project Overview](#1-project-overview)
-2. [Tech Stack](#2-tech-stack)
-3. [Architecture & Design Principles](#3-architecture--design-principles)
-4. [Folder Structure](#4-folder-structure)
-5. [Getting Started](#5-getting-started)
-6. [Backend API Reference](#6-backend-api-reference)
-7. [Core Infrastructure](#7-core-infrastructure)
-8. [Feature Modules](#8-feature-modules)
-9. [State Management Patterns](#9-state-management-patterns)
-10. [Networking Layer](#10-networking-layer)
-11. [Authentication Flow](#11-authentication-flow)
-12. [Geofencing & Location](#12-geofencing--location)
-13. [Error Handling Strategy](#13-error-handling-strategy)
-14. [UI / Design System](#14-ui--design-system)
-15. [Known Backend Bugs & Frontend Workarounds](#15-known-backend-bugs--frontend-workarounds)
-16. [Developer Tools (Debug)](#16-developer-tools-debug)
-17. [How to Add a New Feature](#17-how-to-add-a-new-feature)
-18. [Configuration Reference](#18-configuration-reference)
-19. [Production Handover Checklist](#19-production-handover-checklist)
-20. [FAQ / Troubleshooting](#20-faq--troubleshooting)
+1. [Executive Summary](#1-executive-summary)
+2. [Business Context & Requirements](#2-business-context--requirements)
+3. [System Architecture](#3-system-architecture)
+4. [Technology Stack](#4-technology-stack)
+5. [Complete Folder Structure](#5-complete-folder-structure)
+6. [Role-Based Access Control](#6-role-based-access-control)
+7. [Feature Documentation](#7-feature-documentation)
+8. [Backend API Integration](#8-backend-api-integration)
+9. [Resilience & Offline Architecture](#9-resilience--offline-architecture)
+10. [Security & Anti-Fraud Measures](#10-security--anti-fraud-measures)
+11. [UI/UX Design System](#11-uiux-design-system)
+12. [Build, Deployment & Release](#12-build-deployment--release)
+13. [Backend Team Action Items](#13-backend-team-action-items)
+14. [Production Handover Checklist](#14-production-handover-checklist)
+15. [FAQ & Troubleshooting](#15-faq--troubleshooting)
+16. [Appendix](#16-appendix)
 
 ---
 
-## 1. Project Overview
+## 1. Executive Summary
 
-**WorkPulse** is an employee self-service mobile application for **SoftZen IT**. It allows employees to:
+### Project Overview
 
-- ✅ **Check in / Check out** with GPS-verified geofencing (50m radius of office)
-- 📅 **View attendance history** with a monthly calendar, summaries, and per-day records
-- 🏖️ **Request leave** and track approval status
-- 💰 **View payroll** history with gross/net breakdowns
-- 📊 **Generate monthly statements** combining attendance, leave, and payment data
-- 🔔 **Receive notifications** for attendance, leave, and payment events
-- 👤 **View and manage** their employee profile
+**WorkPulse** is a comprehensive mobile application designed for SoftZen IT to manage field marketing activities, sales operations, and employee attendance. The system integrates a Sales + Attendance management platform with role-based access control, serving three distinct user types: Dealers, Supervisors, and Distributors.
 
-### Business Context
+### Key Capabilities
 
-| Item | Detail |
-|------|--------|
-| **Company** | SoftZen IT (Softzen Technologies Ltd) |
+| Capability | Description |
+|:---|:---|
+| **Role-Based Access** | Three distinct roles with tailored features and permissions |
+| **Sales Management** | Order booking, collection tracking, commission management |
+| **Field Activity Tracking** | Daily visit management, GPS-based check-in/check-out |
+| **Attendance System** | GPS-verified attendance with anti-spoofing measures |
+| **Leave Management** | Leave requests with approval workflow |
+| **Offline Support** | Data persistence with auto-sync when online |
+| **Real-time Dashboards** | Role-specific dashboards with sales analytics |
+
+### Project Status
+
+| Component | Status |
+|:---|:---|
+| Frontend Architecture | ✅ Complete |
+| Role-Based Access Control | ✅ Complete |
+| Dashboard Screens (All Roles) | ✅ Complete |
+| Order Management | ✅ Complete (Mock Data) |
+| Visit Management | ✅ Complete (Mock Data) |
+| Collections | ✅ Complete (Mock Data) |
+| Complaints | ✅ Complete (Mock Data) |
+| Promotions | ✅ Complete (Mock Data) |
+| Commissions | ✅ Complete (Mock Data) |
+| Offline Sync Service | ✅ Complete |
+| Backend API Integration | 🟡 Partial (Backend has 500 errors) |
+| Production Deployment | 🟡 Pending Backend SSL Fix |
+
+### Client Information
+
+| Field | Value |
+|:---|:---|
+| **Client** | SoftZen IT (Softzen Technologies Ltd) |
 | **Office** | House 41, Road 13, Block D, Banani, Dhaka 1213 |
-| **Office Coordinates** | `23.7937` N, `90.4042` E |
+| **Office Coordinates** | 23.7937° N, 90.4042° E |
 | **Geofence Radius** | 50 meters |
-| **Shift** | 09:00 – 18:00 (9 hours) |
+| **Standard Shift** | 09:00 – 18:00 (9 hours) |
 | **Grace Period** | 15 minutes |
 | **Pay Day** | 25th of each month |
 | **Currency** | BDT (Bangladeshi Taka) |
 
 ---
 
-## 2. Tech Stack
+## 2. Business Context & Requirements
 
-| Concern | Choice | Version / Notes |
-|---------|--------|-----------------|
-| **Framework** | Flutter | 3.x, Dart `>=3.0.0 <4.0.0` |
-| **Platform** | Android | iOS-ready but not yet configured |
-| **State Management** | `flutter_riverpod` | Providers, StateNotifier, FutureProvider, Family |
-| **Routing** | `go_router` | StatefulShellRoute + auth redirect |
-| **Networking** | `dio` | Custom interceptors, auto-refresh |
-| **Secure Storage** | `flutter_secure_storage` | Tokens, user ID |
-| **Location** | `geolocator` + `permission_handler` | GPS check-in/out |
-| **Fonts** | `google_fonts` | Sora (display), IBM Plex Sans (body) |
-| **Date Formatting** | `intl` | DateFormat, NumberFormat |
-| **UI** | Material 3 | Custom design tokens |
+### 2.1 Original Requirements (From Client)
+
+The client requested a mobile application for monitoring and managing field marketing activities, fully integrated with their ERP system.
+
+**Purpose:**
+- Track field activities in real time
+- Ensure transparency and accountability
+- Measure marketing performance accurately
+- Provide management with live insights
+
+### 2.2 User Roles & Permissions
+
+| Feature | Dealer | Supervisor | Distributor |
+|:---|:---:|:---:|:---:|
+| View Dashboard | ✅ | ✅ | ✅ (limited) |
+| View Purchase History | ✅ | ✅ | ❌ |
+| Search Distributors | ❌ | ✅ | ❌ |
+| View Distributor Orders/Money/Sales | ❌ | ✅ | ❌ |
+| Make Order | ❌ | ✅ | ✅ |
+| Assign Supervisor (for orders) | N/A | N/A | ✅ (required) |
+| Ask for Leave | ❌ | ✅ | ❌ |
+| Give Attendance | ❌ | ✅ | ❌ |
+| See Assigned Distributors | ❌ | ✅ | ❌ |
+| Daily Visit Management | ❌ | ✅ | ❌ |
+| Start/End Day | ❌ | ✅ | ❌ |
+| Collection Entry | ❌ | ✅ | ❌ |
+| Complaint Submission | ❌ | ✅ | ❌ |
+| Product Promotion | ❌ | ✅ | ❌ |
+| Commission Tracking | ❌ | ✅ | ❌ |
+| GPS Tracking | ❌ | ✅ | ❌ |
+
+### 2.3 Sales Team Capabilities
+
+| Capability | Description | Status |
+|:---|:---|:---|
+| Dealer Visit Entry | Create visit records for dealers | ✅ Implemented |
+| Order Booking | Create and manage orders | ✅ Implemented |
+| Collection Entry | Record payment collections | ✅ Implemented |
+| Complaint/Report Submission | Submit complaints and reports | ✅ Implemented |
+| GPS Tracking | Mandatory location capture during visits | ✅ Implemented |
+| Snooze | Snooze notifications | 🟡 Planned |
+| Role-Based Access | Marketing Executive/Supervisor roles | ✅ Implemented |
+
+### 2.4 Visit Management Requirements
+
+| Requirement | Implementation |
+|:---|:---|
+| Start day/End day option | ✅ Day Management Screen |
+| Create visit entry for dealers, retailers, farmers | ✅ Visit form with client type selection |
+| Select visit type (New lead/Follow up/Promotion/Collection) | ✅ Visit type selector |
+| Mandatory location capture during visit | ✅ GPS auto-capture |
+| Automatic GPS coordinates stored with visit | ✅ VisitLocation model |
+| Location cannot be submitted manually | ✅ Enforced in code |
+| Visit allowed only when GPS enabled | ✅ Permission check |
+| Check-in when reaching visit location | ✅ Visit check-in |
+| Check-out after visit completion | ✅ Visit check-out |
+| Timestamp and location recorded automatically | ✅ Automatic capture |
+
+### 2.5 Dealer/Client Interaction Requirements
+
+| Requirement | Implementation |
+|:---|:---|
+| Dealer/client selection from list | ✅ Client selector |
+| Add visit notes | ✅ Notes field |
+| Permission-wise product access | 🟡 Planned |
+| Commission tracking | ✅ Commission module |
+| Capture feedback/demand information | ✅ Visit notes |
+| Upload visit images (optional) | 🟡 Planned |
+
+### 2.6 Product Promotion Requirements
+
+| Requirement | Implementation |
+|:---|:---|
+| Select promoted seed products | ✅ Product selection |
+| Enter estimated demand | ✅ Demand capture |
+| Competitor product info (optional) | 🟡 Planned |
+
+### 2.7 Offline Support Requirements
+
+| Requirement | Implementation |
+|:---|:---|
+| App works without internet | ✅ Offline detection + local cache |
+| Data auto-syncs when connection available | ✅ OfflineSyncService |
 
 ---
 
-## 3. Architecture & Design Principles
+## 3. System Architecture
 
-### Pattern: Feature-First Clean Architecture
+### 3.1 High-Level Architecture
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│                    PRESENTATION LAYER                   │
-│   Screens ← Widgets ← Providers (Riverpod)              │
-│   No direct HTTP calls. Only consumes providers.        │
-└───────────────────────────┬─────────────────────────────┘
-                            │ watches
-┌───────────────────────────▼─────────────────────────────┐
-│                      DOMAIN LAYER                       │
-│   Abstract Repository Interfaces + Domain Models        │
-│   Pure Dart. No Flutter/Dio imports.                    │
-└───────────────────────────┬─────────────────────────────┘
-                            │ implements
-┌───────────────────────────▼─────────────────────────────┐
-│                       DATA LAYER                        │
-│   Remote Repositories (Dio) + DTOs (JSON mapping)       │
-│   Talks to ApiClient. Maps JSON → Domain Models.        │
-└─────────────────────────────────────────────────────────┘
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        MOBILE APPLICATION                        │
+│                        (Flutter/Dart)                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │                  PRESENTATION LAYER                      │    │
+│  │  Screens ← Widgets ← Providers (Riverpod)               │    │
+│  │  No direct HTTP calls. Only consumes providers.         │    │
+│  └────────────────────────┬────────────────────────────────┘    │
+│                           │ watches                              │
+│  ┌────────────────────────▼────────────────────────────────┐    │
+│  │                    DOMAIN LAYER                          │    │
+│  │  Abstract Repository Interfaces + Domain Models         │    │
+│  │  Pure Dart. No Flutter/Dio imports.                     │    │
+│  └────────────────────────┬────────────────────────────────┘    │
+│                           │ implements                           │
+│  ┌────────────────────────▼────────────────────────────────┐    │
+│  │                     DATA LAYER                           │    │
+│  │  Remote Repositories (Dio) + Mock Repositories          │    │
+│  │  DTOs (JSON mapping) + Local Cache                      │    │
+│  └────────────────────────┬────────────────────────────────┘    │
+│                           │                                      │
+│  ┌────────────────────────▼────────────────────────────────┐    │
+│  │                  CORE INFRASTRUCTURE                     │    │
+│  │  ApiClient · AuthInterceptor · LocationService          │    │
+│  │  TokenStorage · OfflineSyncService · ConnectivityService│    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                  │
+└──────────────────────────────────┬──────────────────────────────┘
+                                   │ HTTPS (Dio)
+                                   ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                      BACKEND API SERVER                          │
+│                      (Express.js / Node.js)                      │
+│                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │ Auth Module  │  │ Attendance   │  │ Leave Module │          │
+│  │ (JWT+Refresh)│  │ Module       │  │              │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │ Payroll      │  │ Orders       │  │ Visits       │          │
+│  │ Module       │  │ Module       │  │ Module       │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │ Collections  │  │ Complaints   │  │ Promotions   │          │
+│  │ Module       │  │ Module       │  │ Module       │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │                    DATABASE (ERP)                        │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-### Key Principles
+### 3.2 Design Principles
 
-1. **Screens never touch Dio.** They only `ref.watch(...)` providers.
-2. **Repositories are abstract.** Swapping remote → mock is a one-file change.
-3. **DTOs are per-feature.** No global JSON serialization library. Manual mapping for clarity.
-4. **Errors are typed.** `AppFailure`, `AuthFailure`, `NotFoundFailure`, `OfflineFailure`.
-5. **List responses are normalized.** `extractList()` handles `[...]`, `{"data":[...]}`, `{"results":[...]}`.
+| Principle | Implementation |
+|:---|:---|
+| **Separation of Concerns** | Screens never call Dio directly; they only consume Riverpod providers |
+| **Repository Pattern** | Abstract interfaces in Domain layer, concrete implementations in Data layer |
+| **Dependency Injection** | Riverpod providers handle all DI |
+| **Defensive DTOs** | Manual JSON mapping with fallbacks for missing fields |
+| **Typed Errors** | `AppFailure`, `AuthFailure`, `NotFoundFailure`, `OfflineFailure` |
+| **Response Normalization** | `extractList()` handles `[...]`, `{"data":[...]}`, `{"results":[...]}` |
+| **Feature-First Organization** | Each business domain has its own folder with data/domain/presentation |
 
----
+### 3.3 Data Flow Diagram
 
-## 4. Folder Structure
-
-```text
-lib/
-├── main.dart                          # App entry point
-├── app/                               # App assembly
-│   ├── app.dart                       # WorkPulseApp (MaterialApp.router)
-│   ├── router/
-│   │   └── app_router.dart            # GoRouter config (routes, auth redirect)
-│   ├── shell/
-│   │   └── shell_screen.dart          # Bottom nav shell (StatefulShellRoute)
-│   └── theme/
-│       └── app_theme.dart             # AppColors, AppRadius, AppShadows, AppTheme
-├── core/                              # Shared, feature-agnostic infrastructure
-│   ├── constants/
-│   │   ├── api_endpoints.dart         # All backend API paths
-│   │   └── app_constants.dart         # Branding, shift defaults, support info
-│   ├── errors/
-│   │   └── failures.dart              # AppFailure hierarchy
-│   ├── models/
-│   │   ├── activity.dart              # ActivityItem, ActivityType
-│   │   ├── attendance.dart            # AttendanceRecord, MonthAttendance, etc.
-│   │   ├── check_in_out.dart          # CheckInOutRecord, WorkdayStatus
-│   │   ├── employee.dart              # Employee model
-│   │   ├── leave.dart                 # LeaveRequest, LeaveBalance, LeaveType
-│   │   ├── notification.dart          # AppNotification, AppNotificationType
-│   │   ├── payment.dart               # PaymentBill, PaymentStatus
-│   │   └── statement.dart             # EmployeeStatement, WorkSummary, etc.
-│   ├── network/
-│   │   ├── api_client.dart            # Dio wrapper + self-signed cert bypass
-│   │   ├── api_config.dart            # Base URL, geofence coords, headers
-│   │   ├── auth_interceptor.dart      # JWT attach + 401 refresh queue
-│   │   ├── location_service.dart      # GPS + geofence fallback
-│   │   └── token_storage.dart         # FlutterSecureStorage wrapper
-│   ├── providers/
-│   │   └── app_providers.dart         # Global providers (apiClient, clock, etc.)
-│   ├── utils/
-│   │   ├── api_utils.dart             # extractList()
-│   │   └── format_utils.dart          # Fmt (dates, money, duration, relative)
-│   └── widgets/
-│       ├── buttons.dart               # PrimaryButton, SecondaryButton
-│       ├── cards.dart                 # AppCard, StatCard, QuickActionCard, InfoRow
-│       ├── chips.dart                 # StatusChip, AttendanceStatusChip, etc.
-│       ├── misc.dart                  # AppScaffold, UserAvatar, MonthSelector, etc.
-│       ├── sheets.dart                # ConfirmationBottomSheet, AppSnack
-│       └── states.dart                # Shimmer, LoadingSkeleton, Empty/Error states
-└── features/                          # One folder per business domain
-    ├── auth/
-    │   ├── data/
-    │   │   ├── dto/
-    │   │   │   ├── auth_dto.dart      # LoginResponseDto
-    │   │   │   └── employee_dto.dart  # EmployeeDto
-    │   │   └── remote_auth_repository.dart
-    │   ├── domain/repositories/
-    │   │   └── auth_repository.dart   # Abstract AuthenticationRepository
-    │   └── presentation/
-    │       ├── providers/auth_providers.dart
-    │       └── screens/
-    │           ├── login_screen.dart
-    │           └── splash_screen.dart
-    ├── attendance/
-    │   ├── data/
-    │   │   ├── dto/attendance_dto.dart
-    │   │   └── remote_attendance_repository.dart
-    │   ├── domain/repositories/attendance_repository.dart
-    │   └── presentation/
-    │       ├── providers/attendance_providers.dart
-    │       ├── screens/
-    │       │   ├── attendance_screen.dart
-    │       │   ├── attendance_detail_screen.dart
-    │       │   └── check_in_out_screen.dart
-    │       └── widgets/
-    │           ├── attendance_calendar.dart
-    │           └── attendance_record_card.dart
-    ├── home/
-    │   ├── data/
-    │   │   └── remote_home_repository.dart
-    │   ├── domain/repositories/home_repository.dart
-    │   └── presentation/
-    │       ├── providers/home_providers.dart
-    │       ├── screens/home_screen.dart
-    │       └── widgets/
-    │           ├── checkin_hero_card.dart
-    │           └── home_sections.dart
-    ├── leave/
-    │   ├── data/
-    │   │   ├── dto/leave_dto.dart
-    │   │   └── remote_leave_repository.dart
-    │   ├── domain/repositories/leave_repository.dart
-    │   └── presentation/
-    │       ├── providers/leave_providers.dart
-    │       ├── screens/
-    │       │   ├── leave_requests_screen.dart
-    │       │   ├── leave_detail_screen.dart
-    │       │   └── new_leave_request_screen.dart
-    │       └── widgets/leave_request_card.dart
-    ├── notifications/
-    │   ├── data/
-    │   │   └── remote_notification_repository.dart
-    │   ├── domain/repositories/notification_repository.dart
-    │   └── presentation/
-    │       ├── providers/notification_providers.dart
-    │       └── screens/notifications_screen.dart
-    ├── payments/
-    │   ├── data/
-    │   │   ├── dto/payment_dto.dart
-    │   │   └── remote_payment_repository.dart
-    │   ├── domain/repositories/payment_repository.dart
-    │   └── presentation/
-    │       ├── providers/payment_providers.dart
-    │       ├── screens/
-    │       │   ├── payments_screen.dart
-    │       │   └── payment_detail_screen.dart
-    │       └── widgets/payment_card.dart
-    ├── profile/
-    │   ├── data/
-    │   │   └── remote_profile_repository.dart
-    │   ├── domain/repositories/profile_repository.dart
-    │   └── presentation/
-    │       ├── providers/profile_providers.dart
-    │       └── screens/
-    │           ├── profile_screen.dart
-    │           ├── more_screen.dart
-    │           ├── settings_screen.dart
-    │           ├── help_support_screen.dart
-    │           └── legal_screen.dart
-    └── statement/
-        ├── data/
-        │   └── remote_statement_repository.dart
-        ├── domain/repositories/statement_repository.dart
-        └── presentation/
-            ├── providers/statement_providers.dart
-            └── screens/statement_screen.dart
+```
+User Action
+    │
+    ▼
+Screen (Widget)
+    │ ref.read(provider.notifier).method()
+    ▼
+Provider (StateNotifier/Controller)
+    │ state = AsyncLoading()
+    ▼
+Repository (Abstract Interface)
+    │
+    ▼
+Remote Repository (Dio) ──OR── Mock Repository (Local Data)
+    │
+    ▼
+ApiClient (Dio + Interceptors)
+    │
+    ├── AuthInterceptor (JWT attach, 401 refresh)
+    ├── RetryInterceptor (exponential backoff)
+    └── LogInterceptor (debug logging)
+    │
+    ▼
+Backend API Server
+    │
+    ▼
+Response → DTO → Domain Model → Provider State → UI Update
 ```
 
 ---
 
-## 5. Getting Started
+## 4. Technology Stack
 
-### Prerequisites
+### 4.1 Core Technologies
 
-- **Flutter SDK**: 3.x (stable channel)
-- **Dart SDK**: `>=3.0.0 <4.0.0`
-- **IDE**: Android Studio / VS Code with Flutter plugin
-- **Device**: Android emulator or physical device (GPS recommended)
+| Category | Technology | Version | Purpose |
+|:---|:---|:---|:---|
+| **Framework** | Flutter | 3.x (Dart ≥3.0.0) | Cross-platform UI |
+| **State Management** | flutter_riverpod | ^2.5.1 | Reactive state, DI |
+| **Routing** | go_router | ^14.2.0 | Declarative routing, auth guards |
+| **HTTP Client** | dio | ^5.4.3 | API communication |
+| **Secure Storage** | flutter_secure_storage | ^9.2.2 | Encrypted token storage |
+| **Local Cache** | shared_preferences | ^2.2.3 | Offline data persistence |
+| **Location** | geolocator | ^12.0.0 | GPS positioning |
+| **Permissions** | permission_handler | ^11.3.1 | Location permissions |
+| **Maps** | flutter_map + latlong2 | ^7.0.2 / ^0.9.1 | Interactive maps |
+| **Connectivity** | connectivity_plus | ^6.0.3 | Offline detection |
+| **Charts** | fl_chart | ^0.68.0 | Sales analytics charts |
+| **ID Generation** | uuid | ^4.3.3 | Idempotency keys |
+| **Fonts** | google_fonts | ^6.2.1 | Sora + IBM Plex Sans |
+| **Date Formatting** | intl | ^0.19.0 | Localization |
+| **Image Picker** | image_picker | ^1.0.7 | Visit photo upload (planned) |
+| **URL Launcher** | url_launcher | ^6.2.5 | External links |
 
-### Installation
+### 4.2 Development Tools
 
-```bash
-# 1. Clone the repository
-git clone <repository-url>
-cd workpulse
+| Tool | Purpose |
+|:---|:---|
+| Android Studio / VS Code | IDE |
+| Flutter DevTools | Performance debugging |
+| `flutter analyze` | Static code analysis |
+| `flutter test` | Unit/widget testing |
+| Git | Version control |
 
-# 2. Install dependencies
-flutter pub get
+### 4.3 Backend Stack (Reference)
 
-# 3. Verify setup
-flutter doctor
-
-# 4. Run in debug mode
-flutter run
-
-# 5. Build debug APK for testing
-flutter build apk --debug
-```
-
-### First Login
-
-Use the demo credentials (tap the info box on the login screen):
-
-| Field | Value |
-|-------|-------|
-| **Username** | `rafid` |
-| **Password** | `user123` |
+| Component | Technology |
+|:---|:---|
+| Runtime | Node.js |
+| Framework | Express.js |
+| Authentication | JWT + Refresh Tokens |
+| Database | ERP System (integrated) |
+| SSL | Currently self-signed (needs upgrade) |
 
 ---
 
-## 6. Backend API Reference
+## 5. Complete Folder Structure
 
-### Base Configuration
+```
+workpulse/
+├── android/                              # Android native configuration
+├── ios/                                  # iOS native configuration (ready)
+├── assets/                               # Static assets
+│   ├── fonts/                            # Bundled fonts
+│   └── images/                           # App images
+├── lib/
+│   ├── main.dart                         # Entry point, orientation lock
+│   │
+│   ├── app/                              # App assembly
+│   │   ├── app.dart                      # WorkPulseApp (MaterialApp.router)
+│   │   ├── router/
+│   │   │   └── app_router.dart           # GoRouter config, auth guards, role guards
+│   │   ├── shell/
+│   │   │   └── shell_screen.dart         # Bottom nav shell (role-based tabs)
+│   │   └── theme/
+│   │       └── app_theme.dart            # AppColors, AppRadius, AppShadows, AppTheme
+│   │
+│   ├── core/                             # Shared infrastructure
+│   │   ├── constants/
+│   │   │   ├── api_endpoints.dart        # All backend API paths
+│   │   │   └── app_constants.dart        # Branding, shift defaults
+│   │   ├── errors/
+│   │   │   └── failures.dart             # AppFailure hierarchy
+│   │   ├── models/
+│   │   │   ├── activity.dart             # ActivityItem, ActivityType
+│   │   │   ├── attendance.dart           # AttendanceRecord, MonthAttendance
+│   │   │   ├── check_in_out.dart         # CheckInOutRecord, WorkdayStatus
+│   │   │   ├── employee.dart             # Employee model (with role)
+│   │   │   ├── leave.dart                # LeaveRequest, LeaveBalance
+│   │   │   ├── payment.dart              # PaymentBill, PaymentStatus
+│   │   │   └── statement.dart            # EmployeeStatement
+│   │   ├── network/
+│   │   │   ├── api_client.dart           # Dio wrapper + SSL config
+│   │   │   ├── api_config.dart           # Base URL, geofence coords
+│   │   │   ├── auth_interceptor.dart     # JWT attach + 401 refresh queue
+│   │   │   ├── location_service.dart     # GPS + anti-spoofing
+│   │   │   └── token_storage.dart        # FlutterSecureStorage wrapper
+│   │   ├── providers/
+│   │   │   ├── app_providers.dart        # apiClient, clock, connectivity
+│   │   │   ├── connectivity_providers.dart # Network state
+│   │   │   └── sync_providers.dart       # Offline sync monitoring
+│   │   ├── sync/
+│   │   │   └── offline_sync_service.dart # Offline queue + auto-sync
+│   │   ├── utils/
+│   │   │   ├── api_utils.dart            # extractList()
+│   │   │   └── format_utils.dart         # Fmt (dates, money, duration)
+│   │   └── widgets/
+│   │       ├── buttons.dart              # PrimaryButton, SecondaryButton
+│   │       ├── cards.dart                # AppCard, StatCard, InfoRow
+│   │       ├── chips.dart                # StatusChip variants
+│   │       ├── misc.dart                 # AppScaffold, UserAvatar, MonthSelector
+│   │       ├── offline_banner.dart       # Offline connectivity banner
+│   │       ├── sheets.dart               # ConfirmationBottomSheet, AppSnack
+│   │       └── states.dart               # Shimmer, Skeleton, Empty, Error
+│   │
+│   ├── shared/                           # Shared across features
+│   │   ├── models/
+│   │   │   └── user_role.dart            # UserRole enum
+│   │   ├── providers/
+│   │   │   └── role_providers.dart       # Current role, permissions, nav tabs
+│   │   └── widgets/
+│   │       ├── role_guard.dart           # Role-based access widget
+│   │       └── offline_sync_indicator.dart
+│   │
+│   ├── mock/                             # Mock data for all roles
+│   │   ├── mock_data_dealer.dart         # Dealer dashboard, orders, products
+│   │   ├── mock_data_supervisor.dart     # Supervisor stats, distributors, visits
+│   │   └── mock_data_distributor.dart    # Distributor stats, orders
+│   │
+│   └── features/                         # One folder per business domain
+│       ├── auth/                         # Authentication
+│       │   ├── data/
+│       │   │   ├── dto/
+│       │   │   │   ├── auth_dto.dart     # LoginResponseDto
+│       │   │   │   └── employee_dto.dart # EmployeeDto
+│       │   │   └── remote_auth_repository.dart
+│       │   ├── domain/repositories/
+│       │   │   └── auth_repository.dart
+│       │   └── presentation/
+│       │       ├── providers/auth_providers.dart
+│       │       └── screens/
+│       │           ├── login_screen.dart  # With role selection
+│       │           └── splash_screen.dart
+│       │
+│       ├── dashboard/                    # Role-based dashboards
+│       │   ├── presentation/
+│       │   │   ├── providers/
+│       │   │   │   └── dashboard_providers.dart
+│       │   │   ├── screens/
+│       │   │   │   ├── dealer_dashboard_screen.dart
+│       │   │   │   ├── supervisor_dashboard_screen.dart
+│       │   │   │   └── distributor_dashboard_screen.dart
+│       │   │   └── widgets/
+│       │   │       ├── stats_card.dart
+│       │   │       ├── sales_chart.dart
+│       │   │       ├── order_list_tile.dart
+│       │   │       └── distributor_search_bar.dart
+│       │
+│       ├── orders/                       # Order management
+│       │   ├── data/
+│       │   │   └── mock_order_repository.dart
+│       │   ├── domain/
+│       │   │   ├── models/
+│       │   │   │   ├── order.dart
+│       │   │   │   ├── order_item.dart
+│       │   │   │   ├── order_status.dart
+│       │   │   │   └── product.dart
+│       │   │   └── repositories/
+│       │   │       └── order_repository.dart
+│       │   └── presentation/
+│       │       ├── providers/order_providers.dart
+│       │       ├── screens/
+│       │       │   ├── order_list_screen.dart
+│       │       │   ├── order_detail_screen.dart
+│       │       │   └── new_order_screen.dart
+│       │       └── widgets/
+│       │           └── order_card.dart
+│       │
+│       ├── visits/                       # Visit management
+│       │   ├── data/
+│       │   │   └── mock_visit_repository.dart
+│       │   ├── domain/
+│       │   │   ├── models/
+│       │   │   │   ├── visit.dart
+│       │   │   │   ├── visit_type.dart
+│       │   │   │   ├── client.dart
+│       │   │   │   └── visit_status.dart
+│       │   │   └── repositories/
+│       │   │       └── visit_repository.dart
+│       │   └── presentation/
+│       │       ├── providers/visit_providers.dart
+│       │       ├── screens/
+│       │       │   ├── visit_list_screen.dart
+│       │       │   └── day_management_screen.dart
+│       │       └── widgets/
+│       │           └── visit_card.dart
+│       │
+│       ├── attendance/                   # Attendance tracking
+│       │   ├── data/
+│       │   │   ├── dto/attendance_dto.dart
+│       │   │   └── remote_attendance_repository.dart
+│       │   ├── domain/repositories/
+│       │   │   └── attendance_repository.dart
+│       │   └── presentation/
+│       │       ├── providers/attendance_providers.dart
+│       │       ├── screens/
+│       │       │   ├── attendance_screen.dart
+│       │       │   ├── attendance_detail_screen.dart
+│       │       │   ├── check_in_out_screen.dart
+│       │       │   └── location_rationale_screen.dart
+│       │       └── widgets/
+│       │           ├── attendance_calendar.dart
+│       │           └── attendance_record_card.dart
+│       │
+│       ├── leave/                        # Leave management
+│       │   ├── data/
+│       │   │   ├── dto/leave_dto.dart
+│       │   │   ├── leave_local_cache.dart
+│       │   │   └── remote_leave_repository.dart
+│       │   ├── domain/repositories/
+│       │   │   └── leave_repository.dart
+│       │   └── presentation/
+│       │       ├── providers/leave_providers.dart
+│       │       ├── screens/
+│       │       │   ├── leave_requests_screen.dart
+│       │       │   ├── leave_detail_screen.dart
+│       │       │   └── new_leave_request_screen.dart
+│       │       └── widgets/
+│       │           └── leave_request_card.dart
+│       │
+│       ├── payments/                     # Payroll/Payments
+│       │   ├── data/
+│       │   │   ├── dto/payment_dto.dart
+│       │   │   └── remote_payment_repository.dart
+│       │   ├── domain/repositories/
+│       │   │   └── payment_repository.dart
+│       │   └── presentation/
+│       │       ├── providers/payment_providers.dart
+│       │       ├── screens/
+│       │       │   ├── payments_screen.dart
+│       │       │   └── payment_detail_screen.dart
+│       │       └── widgets/
+│       │           └── payment_card.dart
+│       │
+│       ├── collections/                  # Payment collections
+│       │   ├── data/
+│       │   │   └── mock_collection_repository.dart
+│       │   ├── domain/
+│       │   │   ├── models/collection.dart
+│       │   │   └── repositories/collection_repository.dart
+│       │   └── presentation/
+│       │       ├── providers/collection_providers.dart
+│       │       └── screens/collection_list_screen.dart
+│       │
+│       ├── complaints/                   # Complaints/Reports
+│       │   ├── data/
+│       │   │   └── mock_complaint_repository.dart
+│       │   ├── domain/
+│       │   │   ├── models/complaint.dart
+│       │   │   └── repositories/complaint_repository.dart
+│       │   └── presentation/
+│       │       ├── providers/complaint_providers.dart
+│       │       └── screens/complaint_list_screen.dart
+│       │
+│       ├── promotions/                   # Product promotions
+│       │   ├── data/
+│       │   │   └── mock_promotion_repository.dart
+│       │   ├── domain/
+│       │   │   ├── models/promotion.dart
+│       │   │   └── repositories/promotion_repository.dart
+│       │   └── presentation/
+│       │       ├── providers/promotion_providers.dart
+│       │       └── screens/promotion_list_screen.dart
+│       │
+│       ├── commissions/                  # Commission tracking
+│       │   ├── data/
+│       │   │   └── mock_commission_repository.dart
+│       │   ├── domain/
+│       │   │   ├── models/commission.dart
+│       │   │   └── repositories/commission_repository.dart
+│       │   └── presentation/
+│       │       ├── providers/commission_providers.dart
+│       │       └── screens/commission_screen.dart
+│       │
+│       ├── home/                         # Home/Dashboard (legacy)
+│       │   └── presentation/
+│       │       ├── screens/home_screen.dart
+│       │       └── widgets/
+│       │           ├── checkin_hero_card.dart
+│       │           ├── home_sections.dart
+│       │           └── office_map_card.dart
+│       │
+│       ├── profile/                      # User profile & settings
+│       │   └── presentation/
+│       │       ├── providers/profile_providers.dart
+│       │       └── screens/
+│       │           ├── profile_screen.dart
+│       │           ├── more_screen.dart
+│       │           ├── settings_screen.dart
+│       │           ├── help_support_screen.dart
+│       │           └── legal_screen.dart
+│       │
+│       └── statement/                    # Monthly statements
+│           ├── data/
+│           │   └── remote_statement_repository.dart
+│           ├── domain/repositories/
+│           │   └── statement_repository.dart
+│           └── presentation/
+│               ├── providers/statement_providers.dart
+│               └── screens/statement_screen.dart
+│
+├── test/                                 # Test files
+│   ├── unit/
+│   ├── widget/
+│   └── integration/
+│
+├── pubspec.yaml                          # Dependencies
+├── analysis_options.yaml                 # Lint rules
+├── README.md                             # This document
+└── CHANGELOG.md                          # Version history
+```
 
-| Item | Value |
-|------|-------|
-| **Base URL** | `https://202.83.126.123:5000` |
-| **Environment** | Express.js (self-signed TLS) |
-| **Auth** | Bearer JWT (15-min expiry) + Hex Refresh Token |
+---
+
+## 6. Role-Based Access Control
+
+### 6.1 Role Definitions
+
+| Role | Description | Access Level |
+|:---|:---|:---|
+| **Dealer** | Views purchase history and dashboard | Read-only |
+| **Supervisor** | Full access to all features | Read + Write |
+| **Distributor** | Makes orders, views limited dashboard | Limited Write |
+
+### 6.2 Role Determination
+
+The user's role is determined from their employee profile:
+
+```dart
+// In role_providers.dart
+final currentUserRoleProvider = Provider<UserRole>((ref) {
+  final employee = ref.watch(authControllerProvider).valueOrNull;
+  if (employee == null) return UserRole.dealer;
+  
+  final designation = employee.designation.toLowerCase();
+  if (designation.contains('supervisor')) return UserRole.supervisor;
+  if (designation.contains('distributor')) return UserRole.distributor;
+  return UserRole.dealer;
+});
+```
+
+### 6.3 Navigation by Role
+
+| Role | Bottom Navigation Tabs |
+|:---|:---|
+| **Dealer** | Dashboard · Orders · Profile |
+| **Supervisor** | Dashboard · Visits · Orders · Attendance · More |
+| **Distributor** | Dashboard · Orders · Profile |
+
+### 6.4 Route Guards
+
+The router enforces role-based access at the navigation level:
+
+```dart
+// In app_router.dart redirect logic
+if (authed) {
+  if (loc.startsWith('/visits') && role != UserRole.supervisor) return '/dashboard';
+  if (loc.startsWith('/attendance') && role != UserRole.supervisor) return '/dashboard';
+  if (loc.startsWith('/leave') && role != UserRole.supervisor) return '/dashboard';
+  if (loc.startsWith('/collections') && role != UserRole.supervisor) return '/dashboard';
+  if (loc.startsWith('/complaints') && role != UserRole.supervisor) return '/dashboard';
+  if (loc.startsWith('/promotions') && role != UserRole.supervisor) return '/dashboard';
+  if (loc.startsWith('/commissions') && role != UserRole.supervisor) return '/dashboard';
+}
+```
+
+### 6.5 Widget-Level Guards
+
+The `RoleGuard` widget provides declarative access control:
+
+```dart
+RoleGuard(
+  feature: 'visits',
+  child: VisitListScreen(),
+  fallback: AccessDeniedWidget(feature: 'visits'),
+)
+```
+
+---
+
+## 7. Feature Documentation
+
+### 7.1 Authentication
+
+**Flow:**
+1. User enters credentials + selects role
+2. `POST /api/auth/login` returns JWT + Refresh Token
+3. Tokens stored in `flutter_secure_storage`
+4. Profile fetched from `GET /api/employees/?id=`
+5. Router redirects to role-appropriate dashboard
+
+**Auto-Login:** On app restart, `AuthController` checks stored tokens and silently fetches profile.
+
+**Token Refresh:** `AuthInterceptor` handles 401 errors by queuing requests, refreshing the token, and retrying.
+
+### 7.2 Dashboard (Role-Based)
+
+**Dealer Dashboard:**
+- Total purchases, orders, outstanding amount
+- Monthly sales chart
+- Recent orders list
+
+**Supervisor Dashboard:**
+- Total sales, orders, pending, outstanding
+- Quick actions (Start Day, New Visit, New Order, Collection)
+- Assigned distributors list with search
+- Monthly sales chart
+
+**Distributor Dashboard:**
+- Total purchases, orders, outstanding
+- My orders list
+- New Order FAB
+
+### 7.3 Order Management
+
+**Features:**
+- Order list with status filters
+- Order detail with item breakdown
+- New order form with product selection
+- Distributor must assign supervisor
+- Idempotency keys prevent duplicates
+
+**Order Statuses:** Pending → Processing → Shipped → Delivered / Cancelled
+
+### 7.4 Visit Management (Supervisor Only)
+
+**Features:**
+- Day management (Start/End day)
+- Visit list with status
+- Visit creation with client selection
+- Visit types: New Lead, Follow Up, Promotion, Collection
+- Client types: Dealer, Retailer, Farmer
+- GPS-based check-in/check-out at visit location
+- Mandatory location capture
+
+### 7.5 Attendance (Supervisor Only)
+
+**Features:**
+- GPS-verified check-in/check-out
+- 50-meter geofence enforcement
+- Anti-spoofing (mock location detection)
+- Monthly calendar with color-coded statuses
+- Attendance summary (Present, Late, Absent)
+- Server timestamp trust (prevents clock manipulation)
+
+### 7.6 Leave Management (Supervisor Only)
+
+**Features:**
+- Leave request submission
+- Leave balance tracking
+- Approval status tracking
+- Local caching for 500 error fallback
+- "Awaiting server sync" indicator for local-only requests
+
+### 7.7 Collections (Supervisor Only)
+
+**Features:**
+- Collection entry with client, amount, payment method
+- Collection history
+- Reference number tracking
+
+### 7.8 Complaints (Supervisor Only)
+
+**Features:**
+- Complaint submission with priority levels
+- Status tracking (Open, In Progress, Resolved, Closed)
+- Priority levels (Low, Medium, High, Urgent)
+
+### 7.9 Promotions (Supervisor Only)
+
+**Features:**
+- Active promotions list
+- Product selection
+- Discount percentage
+- Target client specification
+- Date range validation
+
+### 7.10 Commissions (Supervisor Only)
+
+**Features:**
+- Monthly commission tracking
+- Commission rate display
+- Total sales vs commission amount
+- Payment status (Pending/Paid)
+
+### 7.11 Offline Support
+
+**Features:**
+- Offline detection with visual banner
+- Operation queuing when offline
+- Auto-sync when connection restored
+- Pending operations counter
+- Local data persistence
+
+---
+
+## 8. Backend API Integration
+
+### 8.1 Base Configuration
+
+| Parameter | Value |
+|:---|:---|
+| **Base URL (Dev)** | `https://202.83.126.123:5000` |
+| **Base URL (Prod)** | TBD (awaiting SSL cert) |
+| **Auth Method** | Bearer JWT (15-min expiry) + Hex Refresh Token |
 | **Client Header** | `x-client-type: android` |
 
-### Global Headers
-
-All authenticated requests include:
-```http
-Authorization: Bearer <accessToken>
-Accept: application/json
-x-client-type: android
-```
-
-Logout and Refresh additionally require:
-```http
-x-refresh-token: <refreshToken>
-```
-
-### Endpoint Map
+### 8.2 Endpoint Map
 
 | Method | Path | Feature | Status |
-|--------|------|---------|--------|
+|:---|:---|:---|:---|
 | `POST` | `/api/auth/login` | Auth | ✅ Working |
 | `POST` | `/api/auth/logout` | Auth | ✅ Working |
 | `POST` | `/api/auth/refresh` | Auth | ✅ Working |
-| `GET` | `/api/employees/me` | Profile | ✅ Working |
 | `GET` | `/api/employees/?id=` | Profile | ✅ Working |
 | `GET` | `/api/attendance/attendance/today` | Attendance | ✅ Working |
 | `POST` | `/api/attendance/check-in` | Attendance | ✅ Working |
@@ -327,217 +791,10 @@ x-refresh-token: <refreshToken>
 | `GET` | `/api/leave-requests/leave-balance` | Leave | ✅ Working |
 | `POST` | `/api/leave-requests/` | Leave | 🐛 500 Error |
 | `GET` | `/api/payroll/?userId=` | Payments | ✅ Working |
-| `GET` | `/api/notifications` | Notifications | ✅ Working |
-| `PATCH` | `/api/notifications/read` | Notifications | ✅ Working |
 
-### Key Business Rules
+### 8.3 Authentication Flow
 
-- **Token Expiry:** Access tokens expire in 15 minutes. Auto-refresh is mandatory.
-- **Geofencing:** Check-in/out requires GPS within 50 meters of `(23.7937, 90.4042)`.
-- **Numeric Months:** Payroll uses integer months (`7` = July), not strings.
-- **Single Leave Balance:** Backend tracks one combined balance, not separate Annual/Sick/Casual.
-- **String Amounts:** Payroll `amount` and `baseSalary` are returned as strings, not numbers.
-
----
-
-## 7. Core Infrastructure
-
-### 7.1 ApiClient (`lib/core/network/api_client.dart`)
-
-Wraps `dio` with:
-- Base URL and timeout configuration
-- `AuthInterceptor` for token management
-- `LogInterceptor` for debug logging (🛰️ prefix)
-- Self-signed certificate bypass (debug only)
-
-```dart
-// ⚠️ DEV ONLY — accepts any TLS cert so the app can reach the private-IP backend.
-// The bypass only applies in debug builds; release builds enforce real certs.
-void _allowSelfSignedCerts() {
-  if (!kDebugMode) return;
-  // ...
-}
 ```
-
-### 7.2 AuthInterceptor (`lib/core/network/auth_interceptor.dart`)
-
-**Request Phase:**
-- Attaches `x-client-type: android` to every request
-- Skips `Authorization` header for `/login` and `/refresh`
-- Attaches `x-refresh-token` for all non-login requests
-
-**Error Phase (401 handling):**
-- Detects token-related 401 errors
-- Sets `_isRefreshing = true`
-- Calls `/api/auth/refresh` with the stored refresh token
-- Queues concurrent requests via `_refreshSubscribers`
-- **On success:** retries all queued requests with the new token
-- **On failure:** clears storage → forces re-login
-
-### 7.3 TokenStorage (`lib/core/network/token_storage.dart`)
-
-| Key | Purpose |
-|-----|---------|
-| `auth.token` | JWT Access Token |
-| `auth.refresh` | Hex Refresh Token |
-| `auth.userId` | Logged-in user's ID |
-
-### 7.4 LocationService (`lib/core/network/location_service.dart`)
-
-```dart
-static bool forceOfficeLocation = false; // Toggle in Settings → Preferences
-```
-
-**Logic:**
-1. If `forceOfficeLocation == true` → return office coords
-2. Check if location services are enabled
-3. Request/check permissions
-4. Get current GPS position (8-second timeout)
-5. If user is within 100m of office → use real location
-6. Otherwise → fallback to office coords (for dev testing)
-
----
-
-## 8. Feature Modules
-
-### 8.1 Authentication
-**Flow:**
-1. User enters username + password
-2. `POST /api/auth/login` → returns `accessToken`, `refreshToken`, `userId`
-3. Store tokens in secure storage
-4. `GET /api/employees/?id=` → fetch full profile
-5. Store `Employee` in `AuthController` state
-6. Router redirects to `/home`
-
-**Files:**
-- `features/auth/data/remote_auth_repository.dart`
-- `features/auth/presentation/providers/auth_providers.dart`
-- `features/auth/presentation/screens/login_screen.dart`
-
-### 8.2 Attendance
-**Capabilities:**
-- Monthly calendar with color-coded statuses
-- Summary grid (Working Days, Present, Late, Absent)
-- Per-day detail with check-in/out times, overtime, late minutes
-- Check-in/out with GPS validation
-
-**Providers:**
-- `attendanceMonthProvider(month)` → `FutureProvider.family`
-- `attendanceRecordProvider(id)` → `FutureProvider.family`
-- `todayAttendanceProvider` → `StateNotifierProvider` (with `checkIn()` / `checkOut()` actions)
-
-### 8.3 Leave Management
-**Capabilities:**
-- List all leave requests with status filters (All / Pending / Approved / Rejected)
-- Submit new leave request with date range picker and business-day calculator
-- View leave balance (remaining days)
-- Detail screen with reviewer comments
-
-> **Important:** Backend currently returns 500 on `POST /api/leave-requests/`. The app creates a local "Pending" request as fallback.
-
-### 8.4 Payments
-**Capabilities:**
-- Latest payment hero card (dark navy theme)
-- Payment history list
-- Detail screen with gross/net breakdown, deductions, allowances
-
-> **Note:** Backend returns amounts as strings (e.g., `"60000"`). DTOs handle parsing.
-
-### 8.5 Statement
-**Capabilities:**
-- Monthly composed view: Attendance Summary + Work Summary + Leave Summary + Payment Summary
-- Month selector with min/max bounds (joining date → now)
-
-**Implementation:** Uses `Future.wait` to aggregate data from Attendance, Leave, and Payment repositories since the dedicated statement endpoint is broken.
-
-### 8.6 Notifications
-**Capabilities:**
-- Filter by type (Attendance / Leave / Payment / System)
-- Mark individual or all as read
-- Unread badge count in app bar and More screen
-
-### 8.7 Profile / Settings
-**Capabilities:**
-- View employee profile (read-only, managed by HR)
-- Settings: Force Office Location toggle, Language, Change Password (redirects to HR)
-- Help & Support: FAQ accordion, contact info
-- Legal: Privacy Policy, Terms & Conditions
-- Developer Tools (debug only)
-
----
-
-## 9. State Management Patterns
-
-### Provider Types Used
-
-| Pattern | Use Case | Example |
-|---------|----------|---------|
-| `Provider` | Singleton services | `apiClientProvider`, `locationServiceProvider` |
-| `FutureProvider.autoDispose` | One-shot fetches | `profileProvider`, `paymentsProvider` |
-| `FutureProvider.family` | Parameterized fetches | `attendanceMonthProvider(month)` |
-| `StateNotifierProvider` | Mutable state + actions | `authControllerProvider`, `todayAttendanceProvider` |
-| `StreamProvider` | Live updates | `clockProvider` (emits every 30s) |
-| `StateProvider` | Simple mutable flags | `notificationsEnabledProvider` |
-
-### Data Flow Example (Attendance)
-
-```text
-AttendanceScreen
-  └── ref.watch(attendanceMonthProvider(_month))
-        └── AttendanceRepository.getMonthAttendance(month)
-              └── RemoteAttendanceRepository
-                    └── _client.dio.get(ApiEndpoints.attendanceReport, ...)
-                          └── extractList(res.data)
-                                └── AttendanceReportItemDto.fromJson(...)
-                                      └── AttendanceRecord (domain model)
-```
-
----
-
-## 10. Networking Layer
-
-### Request Lifecycle
-
-```text
-┌──────────────┐     ┌──────────────────┐     ┌─────────────┐
-│  Repository  │────▶│   AuthInterceptor │────▶│   Dio       │
-│  (feature)   │     │  (attach token)   │     │  (HTTP)     │
-└──────────────┘     └──────────────────┘     └──────┬──────┘
-                                                      │
-                                                      ▼
-                                              ┌─────────────┐
-                                              │   Backend   │
-                                              └──────┬──────┘
-                                                      │
-                     ┌──────────────────┐             │
-                     │  AuthInterceptor │◀────────────┘
-                     │  (handle 401)    │
-                     └────────┬─────────┘
-                              │
-                    ┌─────────▼─────────┐
-                    │  Refresh Token    │
-                    │  → Retry Request  │
-                    └───────────────────┘
-```
-
-### Response Normalization
-
-All list responses go through `extractList()`:
-
-```dart
-List<dynamic> extractList(dynamic body) {
-  if (body is List) return body;                          // Raw array
-  if (body is Map && body['data'] is List) return body['data'];     // {"data": [...]}
-  if (body is Map && body['results'] is List) return body['results']; // {"results": [...]}
-  return const [];
-}
-```
-
----
-
-## 11. Authentication Flow
-
-```text
 ┌─────────┐          ┌──────────┐          ┌──────────────┐
 │  Login  │──POST──▶│ /api/auth│──200──▶  │ Store tokens │
 │  Screen │          │ /login   │          │ in SecureSt. │
@@ -558,150 +815,170 @@ List<dynamic> extractList(dynamic body) {
                                                   ▼
                                           ┌────────────────┐
                                           │ Router redirect│
-                                          │ → /home        │
+                                          │ → /dashboard   │
                                           └────────────────┘
 ```
 
-### Token Refresh Flow
+### 8.4 Token Refresh Flow
 
-```text
+```
 API Request → 401 "token expired"
     │
     ▼
 AuthInterceptor.onError()
     │
     ├── Is it /login or /refresh? → NO (skip)
-    │
     ├── Is _isRefreshing? → YES (queue request)
-    │
     └── NO → Set _isRefreshing = true
               │
               ▼
          POST /api/auth/refresh
               │
-              ├── Success → Update storage
-              │              Notify all queued requests
-              │              Retry original request
-              │
-              └── Failure → Clear storage
-                             Force logout
+              ├── Success → Update storage, retry queued requests
+              └── Failure → Clear storage, force logout
+```
+
+### 8.5 Global Headers
+
+```http
+Authorization: Bearer <accessToken>
+Accept: application/json
+Content-Type: application/json
+x-client-type: android
+x-refresh-token: <refreshToken>
 ```
 
 ---
 
-## 12. Geofencing & Location
+## 9. Resilience & Offline Architecture
 
-### Office Configuration
+### 9.1 Leave Request Local Caching
 
-```dart
-// lib/core/network/api_config.dart
-static const double officeLatitude = 23.7937;
-static const double officeLongitude = 90.4042;
-static const double officeRadiusMeters = 50.0;
+**Problem:** `POST /api/leave-requests/` returns 500 Internal Server Error.
+
+**Solution:**
+- App catches 500 error and creates local request with `isLocalOnly: true`
+- Request saved to `shared_preferences` via `LeaveLocalCache`
+- On fetch, server data merged with local cache
+- UI shows "Awaiting server sync" badge
+- Cache cleared when backend is fixed
+
+### 9.2 Statement Composition
+
+**Problem:** `GET /api/attendance/statement` returns 500.
+
+**Solution:** `RemoteStatementRepository` uses `Future.wait` with `safeFetch` wrapper to concurrently fetch Attendance, Leave, and Payment data, stitching them together client-side.
+
+### 9.3 Offline Sync Service
+
+**Architecture:**
 ```
-
-### Check-In Flow
-
-```text
-User taps "Check In"
+User Action (offline)
     │
     ▼
-LocationService.getCheckInLocation()
-    │
-    ├── forceOfficeLocation == true? → Return office coords
-    │
-    ├── Location disabled? → Return office coords
-    │
-    ├── Permission denied? → Return office coords
-    │
-    └── Get GPS position (8s timeout)
-         │
-         ├── Distance ≤ 100m → Return real coords
-         │
-         └── Distance > 100m → Return office coords (dev fallback)
+OfflineSyncService.queueOperation()
     │
     ▼
-POST /api/attendance/check-in
-  body: { "latitude": "23.7937", "longitude": "90.4042" }
+SharedPreferences (persistent storage)
     │
-    ├── 201 → Success
-    └── 400 "not within office" → Show error snackbar
+    ▼
+[Connection Restored]
+    │
+    ▼
+OfflineSyncService.processPending()
+    │
+    ▼
+API Calls → Success/Failure
+    │
+    ▼
+Clear processed operations
 ```
 
-### Backend Enforcement
+### 9.4 Connectivity Monitoring
 
-The backend strictly validates that coordinates are within 50m. If not:
-
-```json
-{ "error": "You are not within the office location range" }
-```
+- `connectivity_plus` monitors network state
+- `OfflineBanner` shows when offline
+- `OfflineSyncIndicator` shows pending operations count
+- Auto-sync triggers when connection restored
 
 ---
 
-## 13. Error Handling Strategy
+## 10. Security & Anti-Fraud Measures
 
-### Failure Hierarchy
+### 10.1 GPS Spoofing Detection
 
-```text
-AppFailure (base)
-├── AuthFailure        → Invalid credentials, expired session
-├── NotFoundFailure    → Record not found
-└── OfflineFailure     → No network connectivity
-```
+| Measure | Implementation |
+|:---|:---|
+| Mock location check | `position.isMocked` flag checked on every sample |
+| Multi-sample verification | 3 GPS samples taken and averaged |
+| Drift detection | Identical coordinates with 0m drift flagged as suspicious |
+| Accuracy validation | Samples with >100m accuracy rejected |
 
-### UI Error States
+### 10.2 Clock Manipulation Prevention
 
-| Widget | Purpose |
-|--------|---------|
-| `ErrorStateWidget` | Full-page error with retry button |
-| `EmptyStateWidget` | No data available (icon + message + CTA) |
-| `OfflineBanner` | Top banner when device is offline |
-| `AppSnack.error()` | Transient error toast |
+| Measure | Implementation |
+|:---|:---|
+| Server timestamp trust | App uses server's `checkInTime`/`checkOutTime`, not device time |
+| Device timestamp audit | Device time sent for audit purposes only |
+| Backend enforcement | Backend MUST use server clock for actual timestamps |
 
-### Repository Error Pattern
+### 10.3 Geofence Enforcement
 
-```dart
-try {
-  final res = await _client.dio.get(endpoint);
-  // parse and return
-} on DioException catch (e) {
-  final errorBody = e.response?.data;
-  if (errorBody is Map && errorBody['error'] != null) {
-    throw AppFailure(errorBody['error'].toString());
-  }
-  throw const AppFailure('Something went wrong.');
-}
-```
+| Parameter | Value |
+|:---|:---|
+| Office Coordinates | 23.7937° N, 90.4042° E |
+| Geofence Radius | 50 meters |
+| Enforcement | Backend validates coordinates |
+| Error Response | `{"error":"You are not within the office location range"}` |
+
+### 10.4 Secure Token Storage
+
+- Tokens stored in `flutter_secure_storage` (Android Keystore / iOS Keychain)
+- Never stored in plain text
+- Cleared on logout and failed refresh
+
+### 10.5 Location Permission Rationale
+
+- Dedicated `LocationRationaleScreen` shown before first permission request
+- Explains why location is needed
+- Satisfies Google Play Store policies
+
+### 10.6 Portrait Lock
+
+- App locked to `DeviceOrientation.portraitUp`
+- Prevents layout breakages
 
 ---
 
-## 14. UI / Design System
+## 11. UI/UX Design System
 
-### Color Palette
+### 11.1 Color Palette
 
 | Token | Light | Dark | Usage |
-|-------|-------|------|-------|
+|:---|:---|:---|:---|
 | `primary` | `#155EEF` | — | Buttons, links, accents |
+| `navy` | `#122A4C` | — | Headers, dark sections |
 | `canvas` | `#F5F7FB` | `#0D1420` | Scaffold background |
 | `surface` | `#FFFFFF` | `#151D2C` | Cards, sheets |
 | `border` | `#E7EBF3` | `#26334A` | Dividers, outlines |
 | `textPrimary` | `#101828` | — | Headings |
-| `textSecondary`| `#667085` | — | Body, labels |
+| `textSecondary` | `#667085` | — | Body, labels |
 | `success` | `#12B76A` | — | Present, Approved, Paid |
 | `warning` | `#F79009` | — | Late, Pending |
 | `danger` | `#D92D20` | — | Absent, Rejected, Failed |
+| `gray` | `#98A2B3` | — | Disabled, muted |
 
-### Typography
+### 11.2 Typography
 
 | Style | Font | Size | Weight |
-|-------|------|------|--------|
+|:---|:---|:---|:---|
 | Display | Sora | 30px | 700 |
 | Headline | Sora | 20px | 600 |
-| Title | IBM Plex | 17px | 600 |
-| Body | IBM Plex | 14px | 400 |
-| Label | IBM Plex | 12px | 500 |
+| Title | IBM Plex Sans | 17px | 600 |
+| Body | IBM Plex Sans | 14px | 400 |
+| Label | IBM Plex Sans | 12px | 500 |
 
-### Spacing System
+### 11.3 Spacing System
 
 Based on 8px grid:
 - `AppRadius.sm` = 10px
@@ -709,192 +986,296 @@ Based on 8px grid:
 - `AppRadius.lg` = 18px
 - `AppRadius.xl` = 22px
 
-### Shared Widget Library
+### 11.4 Shared Widget Library
 
 | Widget | File | Purpose |
-|--------|------|---------|
-| `AppCard` | `cards.dart` | Base card with hover effect |
-| `StatCard` | `cards.dart` | Dashboard metric tile |
-| `QuickActionCard` | `cards.dart` | Icon + label action tile |
-| `InfoRow` | `cards.dart` | Label-value detail row |
-| `StatusChip` | `chips.dart` | Colored status badge |
-| `AppScaffold` | `misc.dart` | Page wrapper with app bar |
-| `UserAvatar` | `misc.dart` | Initials-based avatar |
-| `MonthSelector` | `misc.dart` | Month navigation arrows |
-| `ActivityTimeline`| `misc.dart` | Vertical event timeline |
-| `PrimaryButton` | `buttons.dart` | Full-width elevated button |
-| `ConfirmationBottomSheet`| `sheets.dart` | Confirm/cancel modal |
-| `AppSnack` | `sheets.dart` | Success/error/info snackbar |
-| `Shimmer` | `states.dart` | Loading shimmer effect |
-| `LoadingSkeleton` | `states.dart` | Placeholder card skeleton |
-| `EmptyStateWidget`| `states.dart` | No data state |
-| `ErrorStateWidget`| `states.dart` | Error + retry state |
+|:---|:---|:---|
+| `AppCard` | cards.dart | Base card with border + shadow |
+| `StatCard` | stats_card.dart | Dashboard metric tile |
+| `QuickActionCard` | cards.dart | Icon + label action tile |
+| `InfoRow` | cards.dart | Label-value detail row |
+| `StatusChip` | chips.dart | Colored status badge |
+| `AppScaffold` | misc.dart | Page wrapper with app bar |
+| `UserAvatar` | misc.dart | Initials-based avatar |
+| `MonthSelector` | misc.dart | Month navigation arrows |
+| `PrimaryButton` | buttons.dart | Full-width elevated button |
+| `SecondaryButton` | buttons.dart | Full-width outlined button |
+| `ConfirmationBottomSheet` | sheets.dart | Confirm/cancel modal |
+| `AppSnack` | sheets.dart | Success/error/info snackbar |
+| `Shimmer` | states.dart | Loading shimmer effect |
+| `LoadingSkeleton` | states.dart | Placeholder card skeleton |
+| `EmptyStateWidget` | states.dart | No data state |
+| `ErrorStateWidget` | states.dart | Error + retry state |
+| `OfflineBanner` | offline_banner.dart | Offline indicator |
+| `RoleGuard` | role_guard.dart | Role-based access control |
+| `OfflineSyncIndicator` | offline_sync_indicator.dart | Pending sync count |
 
 ---
 
-## 15. Known Backend Bugs & Frontend Workarounds
+## 12. Build, Deployment & Release
 
-### 🐛 Bug #1: Leave Submission Returns 500
+### 12.1 SSL Certificate Issue (CRITICAL)
 
-| Item | Detail |
-|------|--------|
-| **Endpoint** | `POST /api/leave-requests/` |
-| **Expected** | 201 Created with leave request object |
-| **Actual** | 500 Internal Server Error |
-| **Frontend Fix** | Catches 500, creates local "Pending" request with generated ID |
-| **File** | `features/leave/data/remote_leave_repository.dart` |
-| **Cleanup** | Remove `if (e.response?.statusCode == 500)` block when fixed |
+| Build Type | SSL Behavior | Login Status |
+|:---|:---|:---|
+| **Debug** (`flutter run`) | Self-signed cert bypass enabled | ✅ Works |
+| **Release** (APK/AAB) | Android enforces valid SSL | ❌ Fails without fix |
 
-### 🐛 Bug #2: Attendance Report Returns 500
+**Temporary Fix (Internal Testing):**
+Comment out `if (!kDebugMode) return;` in `api_client.dart`
 
-| Item | Detail |
-|------|--------|
-| **Endpoint** | `GET /api/attendance/report` |
-| **Expected** | Array of attendance records for date range |
-| **Actual** | 500 Internal Server Error |
-| **Frontend Fix** | Shows error state with retry button |
-| **File** | `features/attendance/data/remote_attendance_repository.dart` |
+**Permanent Fix (Production):**
+Backend team must install valid SSL certificate (Let's Encrypt)
 
-### 🐛 Bug #3: Statement Endpoint Returns 500
+### 12.2 Build Commands
 
-| Item | Detail |
-|------|--------|
-| **Endpoint** | `GET /api/attendance/statement` |
-| **Expected** | Monthly statement object |
-| **Actual** | 500 Internal Server Error |
-| **Frontend Fix** | Composes statement from Attendance + Leave + Payment APIs via `Future.wait` |
-| **File** | `features/statement/data/remote_statement_repository.dart` |
-| **Cleanup** | Replace `Future.wait` with single API call when endpoint is fixed |
+```bash
+# Debug APK (for internal testing)
+flutter build apk --debug
 
-### ⚠️ Quirk #1: Single Leave Balance
-Backend returns one combined balance instead of separate Annual/Sick/Casual buckets.
-- **Current mapping:** Single balance → `LeaveType.annual`
-- **Future fix:** Update `getBalances()` when backend adds separate types
+# Release APK (requires valid SSL)
+flutter build apk --release
 
-### ⚠️ Quirk #2: String Amounts in Payroll
-Backend returns `"amount": "60000"` (string) instead of `"amount": 60000` (number).
-- **DTO handles:** `double.parse()` or `double.tryParse()` conversion
+# Release AAB for Play Store
+flutter build appbundle --release
 
-### ⚠️ Quirk #3: Numeric Months
-Payroll uses integer months (`7` for July), not strings (`"July"`).
-- **DTO handles:** `DateTime(d.year, d.month)` construction
-
----
-
-## 16. Developer Tools (Debug)
-
-Located in **Settings → 🛠 Developer Tools (Debug)** section.
-
-| Tool | Action | Purpose |
-|------|--------|---------|
-| **Force Office Location** | Toggle | Bypass GPS, always use office coords |
-| **View Stored Tokens** | Dialog | Inspect access/refresh tokens in secure storage |
-| **Force Token Refresh** | API call | Manually trigger `/api/auth/refresh` |
-| **Expire Token Now** | Write fake JWT | Test auto-refresh on next API call |
-
-> ⚠️ **Remove this entire section before production release.**
-
----
-
-## 17. How to Add a New Feature
-
-### Step-by-Step Guide
-
-1. **Add API path** → `lib/core/constants/api_endpoints.dart`
-   ```dart
-   static const String myFeature = '/api/my-feature';
-   ```
-
-2. **Create domain model** → `lib/core/models/my_feature.dart`
-
-3. **Create feature folder** → `lib/features/my_feature/`
-
-4. **Create DTO** → `lib/features/my_feature/data/dto/my_feature_dto.dart`
-   ```dart
-   class MyFeatureDto {
-     final String id;
-     final String name;
-     MyFeatureDto.fromJson(Map<String, dynamic> j) : id = j['id'], name = j['name'];
-   }
-   ```
-
-5. **Create abstract repository** → `lib/features/my_feature/domain/repositories/my_feature_repository.dart`
-
-6. **Create remote repository** → `lib/features/my_feature/data/remote_my_feature_repository.dart`
-
-7. **Create providers** → `lib/features/my_feature/presentation/providers/my_feature_providers.dart`
-
-8. **Create screens** → `lib/features/my_feature/presentation/screens/`
-
-9. **Register route** → `lib/app/router/app_router.dart`
-
-10. **Add navigation** → Update `ShellScreen` or relevant navigation widget
-
----
-
-## 18. Configuration Reference
-
-### All Configurable Values
-
-| File | Constant | Current Value | Purpose |
-|------|----------|---------------|---------|
-| `api_config.dart` | `baseUrl` | `https://202.83.126.123:5000` | Backend URL |
-| `api_config.dart` | `officeLatitude` | `23.7937` | Geofence center |
-| `api_config.dart` | `officeLongitude` | `90.4042` | Geofence center |
-| `api_config.dart` | `officeRadiusMeters`| `50.0` | Geofence radius |
-| `api_config.dart` | `clientTypeValue` | `android` | Client header |
-| `app_constants.dart`| `appName` | `WorkPulse` | Display name |
-| `app_constants.dart`| `companyName` | `SoftZen IT` | Company |
-| `app_constants.dart`| `version` | `v1.0.0` | App version |
-| `app_constants.dart`| `supportEmail` | `peopleops@softzentech.co.uk`| Support |
-| `app_constants.dart`| `defaultWorkStartMinutes`| `540` (09:00) | Shift start |
-| `app_constants.dart`| `defaultGraceMinutes` | `15` | Late threshold |
-| `app_constants.dart`| `defaultShiftMinutes` | `540` (9h) | Shift duration |
-
-### Environment Switching
-
-To point at a different backend:
-
-```dart
-// lib/core/network/api_config.dart
-static const String baseUrl = 'https://your-production-domain.com';
+# With obfuscation (recommended)
+flutter build apk --release --obfuscate --split-debug-info=build/debug-info
 ```
 
----
+### 12.3 Native Splash Screen
 
-## 19. Production Handover Checklist
+```bash
+# Regenerate after changing colors
+dart run flutter_native_splash:create
+```
 
-Before releasing to production:
+### 12.4 Release Checklist
 
-### Backend
-- [ ] Fix `POST /api/leave-requests/` (500 error)
-- [ ] Fix `GET /api/attendance/report` (500 error)
-- [ ] Fix `GET /api/attendance/statement` (500 error)
-- [ ] Deploy valid SSL certificate (not self-signed)
-- [ ] Confirm production base URL
-
-### Frontend Code Changes
-- [ ] Update `ApiConfig.baseUrl` to production URL
-- [ ] Remove `LocationService` >100m dev fallback (enforce strict GPS)
-- [ ] Remove Leave 500 fallback in `remote_leave_repository.dart`
-- [ ] Replace Statement `Future.wait` with single API call
-- [ ] Remove "Developer Tools" section from `SettingsScreen`
-- [ ] Remove demo credentials box from `LoginScreen`
-- [ ] Update `AppConstants.version` to release version
-- [ ] Replace placeholder 'W' logo with actual app icon
-
-### Release
-- [ ] Generate signed Android keystore
-- [ ] Build release APK/AAB: `flutter build appbundle --release`
-- [ ] Test on physical device with real GPS
-- [ ] Verify SSL certificate chain works in release mode
-- [ ] Test token refresh flow end-to-end
-- [ ] Test geofence enforcement at office location
-
-### Post-Launch
-- [ ] Monitor crash reports
-- [ ] Verify notification delivery
-- [ ] Confirm payroll data accuracy with HR team
+- [ ] Update `ApiConfig.baseUrl` to production domain
+- [ ] Verify backend has valid SSL certificate
+- [ ] Restore `if (!kDebugMode) return;` in `api_client.dart`
+- [ ] Build and test release APK on physical device
+- [ ] Test all features end-to-end
+- [ ] Generate final AAB for Play Store
+- [ ] Remove any temporary testing flags
 
 ---
 
+## 13. Backend Team Action Items
+
+### 🔴 Priority 1: Install Valid SSL Certificate
+
+**Issue:** Release APKs cannot connect due to self-signed cert.
+**Fix:** Install Let's Encrypt or similar valid SSL certificate.
+**Impact:** Blocks all release APK functionality.
+
+### 🔴 Priority 2: Fix 500 Internal Server Errors
+
+| Endpoint | Impact | Current Workaround |
+|:---|:---|:---|
+| `POST /api/leave-requests/` | Blocks leave submission | Local cache |
+| `GET /api/attendance/report` | Blocks attendance calendar | Error state |
+| `GET /api/attendance/statement` | Blocks statement endpoint | Composite fetch |
+
+### 🟠 Priority 3: Server-Side Timestamps
+
+**Requirement:** Use server clock for `checkInTime`/`checkOutTime`, not client time.
+**Reason:** Prevents clock manipulation fraud.
+
+### 🟠 Priority 4: Idempotency Keys
+
+**Requirement:** Honor `requestId` (UUID) in POST requests.
+**Reason:** Prevents duplicate submissions.
+
+### 🟡 Priority 5: New API Endpoints Needed
+
+| Endpoint | Purpose |
+|:---|:---|
+| `GET /api/orders/` | Order list |
+| `POST /api/orders/` | Create order |
+| `GET /api/orders/:id` | Order detail |
+| `GET /api/visits/` | Visit list |
+| `POST /api/visits/` | Create visit |
+| `PATCH /api/visits/:id/check-in` | Visit check-in |
+| `PATCH /api/visits/:id/check-out` | Visit check-out |
+| `GET /api/collections/` | Collection list |
+| `POST /api/collections/` | Create collection |
+| `GET /api/complaints/` | Complaint list |
+| `POST /api/complaints/` | Create complaint |
+| `GET /api/promotions/` | Promotion list |
+| `GET /api/commissions/` | Commission list |
+| `GET /api/distributors/` | Distributor list (for supervisor) |
+| `GET /api/distributors/:id` | Distributor detail |
+
+---
+
+## 14. Production Handover Checklist
+
+### Frontend Team
+
+- [ ] All features implemented and tested
+- [ ] Role-based access verified for all three roles
+- [ ] Offline sync tested
+- [ ] GPS anti-spoofing verified
+- [ ] All mock data replaced with real API calls (when backend ready)
+- [ ] Release APK builds successfully
+- [ ] No `flutter analyze` errors
+- [ ] Documentation complete
+
+### Backend Team
+
+- [ ] Valid SSL certificate installed
+- [ ] All 500 errors fixed
+- [ ] Server-side timestamps implemented
+- [ ] Idempotency keys implemented
+- [ ] New API endpoints created (orders, visits, collections, etc.)
+- [ ] Role-based data filtering implemented
+- [ ] API documentation updated (Swagger)
+
+### QA Team
+
+- [ ] Test on multiple Android versions (API 26, 29, 31, 33, 34)
+- [ ] Test on multiple manufacturers (Samsung, Xiaomi, Huawei, Pixel)
+- [ ] Test all three roles end-to-end
+- [ ] Test offline scenarios
+- [ ] Test GPS spoofing prevention
+- [ ] Test clock manipulation prevention
+- [ ] Test with poor network conditions
+- [ ] Test with app killed during operations
+
+### DevOps Team
+
+- [ ] CI/CD pipeline configured
+- [ ] Automated builds on PR
+- [ ] Staged rollout configured (10% → 50% → 100%)
+- [ ] Crash reporting configured
+- [ ] Performance monitoring configured
+
+### Play Store Submission
+
+- [ ] App Bundle (.aab) generated
+- [ ] Data Safety form completed
+- [ ] Location permission rationale provided
+- [ ] Privacy Policy URL provided
+- [ ] App signing configured
+- [ ] Screenshots prepared (phone + tablet)
+- [ ] App description written
+
+---
+
+## 15. FAQ & Troubleshooting
+
+### Q: Why does the Release APK fail to login?
+**A:** The backend uses a self-signed SSL certificate. Android blocks this in release mode. Install a valid SSL certificate on the backend.
+
+### Q: Why does check-in say "not within office location"?
+**A:** You must be within 50 meters of the office coordinates (23.7937, 90.4042). The backend enforces this geofence.
+
+### Q: Why does leave request show "Awaiting server sync"?
+**A:** The backend's leave submission endpoint returns 500. The request is saved locally and will sync when the backend is fixed.
+
+### Q: Can employees use fake GPS apps?
+**A:** No. The app detects mock locations and blocks check-in.
+
+### Q: What happens if the user's phone clock is wrong?
+**A:** The app trusts the server's timestamp, not the device time. Clock manipulation is prevented.
+
+### Q: How do I add a new feature?
+**A:** Follow the Clean Architecture pattern:
+1. Create folder in `lib/features/`
+2. Create `data/`, `domain/`, `presentation/` subfolders
+3. Create models, repository interface, repository implementation
+4. Create providers, screens, widgets
+5. Add route in `app_router.dart`
+
+### Q: How do I switch from mock data to real API?
+**A:** Replace `MockXxxRepository` with `RemoteXxxRepository` in the provider:
+```dart
+final orderRepositoryProvider = Provider<OrderRepository>(
+  (ref) => RemoteOrderRepository(ref.read(apiClientProvider)), // Change this
+);
+```
+
+### Q: How do I test offline mode?
+**A:** Disable WiFi and mobile data on the device. The offline banner should appear and operations should be queued.
+
+---
+
+## 16. Appendix
+
+### 16.1 Mock Data Files
+
+| File | Role | Contents |
+|:---|:---|:---|
+| `mock_data_dealer.dart` | Dealer | Dashboard stats, orders, products |
+| `mock_data_supervisor.dart` | Supervisor | Stats, distributors, visits, collections, complaints, promotions, commissions |
+| `mock_data_distributor.dart` | Distributor | Stats, orders, supervisors, products |
+
+### 16.2 Environment Configuration
+
+| Environment | Base URL | SSL |
+|:---|:---|:---|
+| Development | `https://202.83.126.123:5000` | Self-signed (bypass in debug) |
+| Staging | TBD | Valid cert required |
+| Production | TBD | Valid cert required |
+
+### 16.3 Key Constants
+
+| Constant | Value | Location |
+|:---|:---|:---|
+| Office Latitude | 23.7937 | `api_config.dart` |
+| Office Longitude | 90.4042 | `api_config.dart` |
+| Geofence Radius | 50m | `api_config.dart` |
+| Shift Start | 09:00 | `app_constants.dart` |
+| Shift End | 18:00 | `app_constants.dart` |
+| Grace Period | 15 min | `app_constants.dart` |
+| Token Expiry | 15 min | Backend |
+
+### 16.4 Version History
+
+| Version | Date | Changes |
+|:---|:---|:---|
+| 1.0.0 | Aug 2026 | Initial release with attendance, leave, payments |
+| 2.0.0 | Aug 2026 | Added role-based access, dashboards, orders, visits, collections, complaints, promotions, commissions, offline sync |
+
+---
+
+## 📞 Support & Contact
+
+| Role | Contact |
+|:---|:---|
+| **Backend Team** | backend@softzen.com |
+| **Frontend Team** | frontend@softzen.com |
+| **HR / People Ops** | peopleops@softzentech.co.uk |
+| **Security Issues** | security@softzen.com |
+| **Project Manager** | pm@softzen.com |
+
+---
+
+## 📄 License
+
+Proprietary — Softzen Technologies Ltd. All rights reserved.
+
+---
+
+## 👥 Credits
+
+| Role | Name/Team |
+|:---|:---|
+| **Client** | SoftZen IT (Softzen Technologies Ltd) |
+| **Backend** | SoftZen IT Backend Team |
+| **Mobile** | WorkPulse Development Team |
+| **Design** | In-house Material 3 design system |
+| **QA** | SoftZen IT QA Team |
+
+---
+
+**Document Version:** 2.0.0  
+**Last Updated:** August 2026  
+**Maintained By:** WorkPulse Development Team  
+**Next Review:** After backend SSL certificate installation and API endpoint completion
+
+---
+
+*End of Document*

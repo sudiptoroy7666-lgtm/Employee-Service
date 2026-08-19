@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:permission_handler/permission_handler.dart';
+
 import '../../../../core/errors/failures.dart';
 import '../../../../core/models/check_in_out.dart';
 import '../../../../core/providers/app_providers.dart';
@@ -35,15 +35,40 @@ class CheckInHeroCard extends ConsumerWidget {
         error: (e, _) => Container(
           key: const ValueKey('hero-error'),
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: AppShadows.raised),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: AppShadows.raised,
+          ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Couldn't load today's attendance", style: theme.textTheme.titleSmall),
+              Row(
+                children: [
+                  const Icon(Icons.wifi_off, size: 20, color: AppColors.warning),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Offline Mode',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: AppColors.warning,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
-              SecondaryButton(
-                label: 'Retry',
-                icon: Icons.refresh,
-                onPressed: () => ref.read(todayAttendanceProvider.notifier).refresh(),
+              Text(
+                "Check-in/out is available offline. Your data will sync when you're back online.",
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              PrimaryButton(
+                label: 'Check In',
+                icon: Icons.fingerprint,
+                onPressed: () => context.push('/attendance/checkin'),
               ),
             ],
           ),
@@ -236,23 +261,15 @@ class CheckInHeroCard extends ConsumerWidget {
     );
   }
 
-  // ✅ FIXED: Now checks for permission/location errors and shows dialog
   Future<void> _checkIn(BuildContext context, WidgetRef ref) async {
     try {
       await ref.read(todayAttendanceProvider.notifier).checkIn();
       if (context.mounted) AppSnack.success(context, 'Checked in — have a great day!');
     } on AppFailure catch (e) {
-      if (context.mounted) {
-        if (e.message.contains('permission') || e.message.contains('location')) {
-          _showLocationPermissionDialog(context);
-        } else {
-          AppSnack.error(context, e.message);
-        }
-      }
+      if (context.mounted) AppSnack.error(context, e.message);
     }
   }
 
-  // ✅ FIXED: Now checks for permission/location errors and shows dialog
   Future<void> _confirmCheckOut(BuildContext context, WidgetRef ref, CheckInOutRecord record, DateTime now) async {
     final confirmed = await ConfirmationBottomSheet.show(
       context,
@@ -283,40 +300,8 @@ class CheckInHeroCard extends ConsumerWidget {
       await ref.read(todayAttendanceProvider.notifier).checkOut();
       if (context.mounted) AppSnack.success(context, 'Checked out — workday completed. Well done!');
     } on AppFailure catch (e) {
-      if (context.mounted) {
-        if (e.message.contains('permission') || e.message.contains('location')) {
-          _showLocationPermissionDialog(context);
-        } else {
-          AppSnack.error(context, e.message);
-        }
-      }
+      if (context.mounted) AppSnack.error(context, e.message);
     }
-  }
-
-  // ✅ NEW: Helper method for location permission dialog
-  void _showLocationPermissionDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Location Permission Needed'),
-        content: const Text(
-          'Check-in requires location access. Please enable location permissions in your device settings.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              openAppSettings();
-            },
-            child: const Text('Open Settings'),
-          ),
-        ],
-      ),
-    );
   }
 }
 

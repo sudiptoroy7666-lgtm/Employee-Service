@@ -33,10 +33,9 @@ final attendanceRecordProvider = FutureProvider.family.autoDispose<AttendanceRec
 
 /// Today's check-in / check-out state, with actions to check in / out.
 final todayAttendanceProvider =
-StateNotifierProvider<TodayAttendanceController, AsyncValue<CheckInOutRecord>>(
-  // 👇 PASS ref to controller
+    StateNotifierProvider<TodayAttendanceController, AsyncValue<CheckInOutRecord>>(
       (ref) => TodayAttendanceController(ref.watch(attendanceRepositoryProvider), ref),
-);
+    );
 
 class TodayAttendanceController extends StateNotifier<AsyncValue<CheckInOutRecord>> {
   TodayAttendanceController(this._repository, this._ref) : super(const AsyncLoading()) {
@@ -47,54 +46,61 @@ class TodayAttendanceController extends StateNotifier<AsyncValue<CheckInOutRecor
   final Ref _ref;
 
   Future<void> refresh() async {
-    // Don't show loading spinner if we already have data (pull-to-refresh)
     final prev = state;
+
     if (prev is! AsyncData) {
       state = const AsyncLoading();
     }
 
     try {
-      final record = await _repository.getToday().timeout(const Duration(seconds: 12));
+      final record = await _repository.getToday()
+          .timeout(const Duration(seconds: 12));
+      
+      debugPrint('✅ TodayAttendance loaded: checkIn=${record.checkInTime}, checkOut=${record.checkOutTime}');
       state = AsyncData(record);
     } catch (e) {
       debugPrint('⚠️ TodayAttendance refresh failed: $e');
-      // If we had previous data, keep it. Otherwise show an empty record, NOT an error.
-      if (prev is AsyncData<CheckInOutRecord>) {
-        state = prev;
-      } else {
-        // Return empty record instead of error so the UI always shows the button
-        state = AsyncData(CheckInOutRecord(
-          id: 'cio-today',
-          employeeId: '',
-          date: DateUtils.dateOnly(DateTime.now()),
-        ));
-      }
+      state = AsyncError(e, StackTrace.current);
     }
   }
 
   Future<void> checkIn() async {
     final prev = state;
     state = const AsyncLoading<CheckInOutRecord>().copyWithPrevious(prev);
+    
     try {
-      final record = await _repository.checkIn().timeout(const Duration(seconds: 15));
+      final record = await _repository.checkIn()
+          .timeout(const Duration(seconds: 15));
       state = AsyncData(record);
       _ref.invalidate(attendanceMonthProvider(DateTime.now()));
     } catch (e) {
-      state = prev;
-      rethrow;
+      debugPrint('⚠️ Check-in failed: $e');
+      
+      if (e is AppFailure) {
+        rethrow;
+      }
+      
+      throw const AppFailure('Check-in failed. Please try again.');
     }
   }
 
   Future<void> checkOut() async {
     final prev = state;
     state = const AsyncLoading<CheckInOutRecord>().copyWithPrevious(prev);
+    
     try {
-      final record = await _repository.checkOut().timeout(const Duration(seconds: 15));
+      final record = await _repository.checkOut()
+          .timeout(const Duration(seconds: 15));
       state = AsyncData(record);
       _ref.invalidate(attendanceMonthProvider(DateTime.now()));
     } catch (e) {
-      state = prev;
-      rethrow;
+      debugPrint('⚠️ Check-out failed: $e');
+      
+      if (e is AppFailure) {
+        rethrow;
+      }
+      
+      throw const AppFailure('Check-out failed. Please try again.');
     }
   }
 }

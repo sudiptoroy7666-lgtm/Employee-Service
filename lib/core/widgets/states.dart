@@ -211,3 +211,30 @@ class ErrorStateWidget extends StatelessWidget {
   }
 }
 
+class OfflineBanner extends StatelessWidget {
+  const OfflineBanner({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      color: AppColors.warningBg,
+      child: SafeArea(
+        bottom: false,
+        child: Row(
+          children: [
+            const Icon(Icons.wifi_off_rounded, size: 16, color: AppColors.warning),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                "You're offline. Some information may be unavailable.",
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(color: const Color(0xFF93520A)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

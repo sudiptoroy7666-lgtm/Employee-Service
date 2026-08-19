@@ -5,13 +5,13 @@ class LoginResponseDto {
         employeeId = j['employeeId']?.toString() ?? '',
         username = j['username']?.toString() ?? '',
         fullName = j['fullName']?.toString() ??
-            // Fallback: decode from JWT if fullName isn't at root level
             _decodeNameFromJwt(j['accessToken']) ??
             j['username']?.toString() ?? '',
         roleId = j['roleId'],
         role = j['role']?.toString() ?? '',
         accessToken = j['accessToken'] as String? ?? '',
-        refreshToken = j['refreshToken'] as String?;
+        refreshToken = j['refreshToken'] as String?,
+        permissions = (j['permissions'] as List<dynamic>?)?.cast<String>() ?? [];
 
   final String id;
   final String employeeId;
@@ -21,6 +21,7 @@ class LoginResponseDto {
   final String role;
   final String accessToken;
   final String? refreshToken;
+  final List<String> permissions;
 
   /// Helper to extract name from JWT payload if not provided at root
   static String? _decodeNameFromJwt(String? token) {

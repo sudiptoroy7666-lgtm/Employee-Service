@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/models/payment.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/format_utils.dart';
+import '../../../../core/widgets/buttons.dart';
 import '../../../../core/widgets/cards.dart';
 import '../../../../core/widgets/chips.dart';
 import '../../../../core/widgets/misc.dart';
+import '../../../../core/widgets/sheets.dart';
 import '../../../../core/widgets/states.dart';
 import '../providers/payment_providers.dart';
 
@@ -22,13 +24,18 @@ class PaymentDetailScreen extends ConsumerWidget {
     return AppScaffold(
       title: 'Payment Detail',
       body: billAsync.when(
-        loading: () => ListView(padding: const EdgeInsets.all(16), children: const [LoadingSkeleton(blocks: 2)]),
+         loading: () => ListView(padding: const EdgeInsets.all(16), children: const [LoadingSkeleton(blocks: 2)]),
         error: (e, _) => ErrorStateWidget(error: e, onRetry: () => ref.invalidate(paymentDetailProvider(billId))),
         data: (bill) {
           final rows = <Widget>[
-            _AmountRow(label: 'Base Salary', amount: bill.grossAmount, currency: bill.currency),
-            if (bill.deductions != null && bill.deductions! > 0)
+            _AmountRow(label: 'Gross Amount', amount: bill.grossAmount, currency: bill.currency),
+            if (bill.allowances != null)
+              _AmountRow(label: 'Allowances', amount: bill.allowances!, currency: bill.currency, positive: true),
+            if (bill.bonuses != null)
+              _AmountRow(label: 'Bonuses', amount: bill.bonuses!, currency: bill.currency, positive: true),
+            if (bill.deductions != null)
               _AmountRow(label: 'Deductions', amount: bill.deductions!, currency: bill.currency, negative: true),
+            if (bill.tax != null) _AmountRow(label: 'Tax', amount: bill.tax!, currency: bill.currency, negative: true),
           ];
 
           return ListView(
@@ -114,6 +121,37 @@ class PaymentDetailScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 14),
+              Reveal(
+                delay: const Duration(milliseconds: 140),
+                child: AppCard(
+                  child: Column(
+                    children: [
+                      InfoRow(label: 'Payment date', value: bill.paymentDate != null ? Fmt.dateMedium(bill.paymentDate!) : '—'),
+                      const Divider(height: 18),
+                      InfoRow(label: 'Reference ID', value: bill.referenceId ?? '—'),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 22),
+              PrimaryButton(
+                label: 'View Payslip',
+                icon: Icons.picture_as_pdf_outlined,
+                onPressed: () => showInfoSheet(
+                  context,
+                  icon: Icons.picture_as_pdf_outlined,
+                  title: 'Payslip coming soon',
+                  message: 'Payslip documents are published by HR. This action will open your payslip as soon as the backend enables it.',
+                ),
+              ),
+              const SizedBox(height: 12),
+              SecondaryButton(
+                label: 'Download Statement',
+                icon: Icons.download_outlined,
+                onPressed: () => AppSnack.info(context, 'Statement downloads will be available in a future release.'),
+              ),
+              const SizedBox(height: 30),
             ],
           );
         },
@@ -123,17 +161,18 @@ class PaymentDetailScreen extends ConsumerWidget {
 }
 
 class _AmountRow extends StatelessWidget {
-  const _AmountRow({required this.label, required this.amount, required this.currency, this.negative = false});
+  const _AmountRow({required this.label, required this.amount, required this.currency, this.positive = false, this.negative = false});
   final String label;
   final double amount;
   final String currency;
+  final bool positive;
   final bool negative;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = negative ? AppColors.danger : theme.textTheme.bodyLarge?.color;
-    final sign = negative ? '−' : '';
+    final color = positive ? AppColors.success : negative ? AppColors.danger : theme.textTheme.bodyLarge?.color;
+    final sign = positive ? '+' : negative ? '−' : '';
     return Row(
       children: [
         Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary)),

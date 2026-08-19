@@ -22,6 +22,7 @@ class NewLeaveRequestScreen extends ConsumerStatefulWidget {
 class _NewLeaveRequestScreenState extends ConsumerState<NewLeaveRequestScreen> {
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
+  LeaveType? _type;
   DateTime? _start;
   DateTime? _end;
   bool _submitting = false;
@@ -36,8 +37,8 @@ class _NewLeaveRequestScreenState extends ConsumerState<NewLeaveRequestScreen> {
 
   LeaveBalance? get _balance {
     final balances = ref.read(leaveBalanceProvider).valueOrNull;
-    if (balances == null || balances.isEmpty) return null;
-    return balances.first;
+    if (balances == null || _type == null) return null;
+    return balances.where((b) => b.type == _type).firstOrNull;
   }
 
   Future<void> _pickStart() async {
@@ -65,8 +66,6 @@ class _NewLeaveRequestScreenState extends ConsumerState<NewLeaveRequestScreen> {
   }
 
   Future<void> _submit() async {
-    if (_submitting) return;
-    
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
@@ -77,7 +76,7 @@ class _NewLeaveRequestScreenState extends ConsumerState<NewLeaveRequestScreen> {
       confirmIcon: Icons.send_outlined,
       body: Column(
         children: [
-          const InfoRow(label: 'Leave type', value: 'Annual Leave'),
+          InfoRow(label: 'Leave type', value: _type!.label),
           const Divider(height: 18),
           InfoRow(label: 'Dates', value: Fmt.dateRange(_start!, _end!)),
           const Divider(height: 18),
@@ -96,7 +95,7 @@ class _NewLeaveRequestScreenState extends ConsumerState<NewLeaveRequestScreen> {
     try {
       await ref.read(leaveRequestsProvider.notifier).submit(
         NewLeaveRequest(
-          leaveType: LeaveType.annual,
+          leaveType: _type!,
           startDate: _start!,
           endDate: _end!,
           numberOfDays: _days,
@@ -147,12 +146,14 @@ class _NewLeaveRequestScreenState extends ConsumerState<NewLeaveRequestScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Leave Type',
-                    prefixIcon: Icon(Icons.beach_access_outlined),
-                  ),
-                  child: Text('Annual Leave (Combined)'),
+                DropdownButtonFormField<LeaveType>(
+                  initialValue: _type,
+                  decoration: const InputDecoration(labelText: 'Leave Type', prefixIcon: Icon(Icons.category_outlined)),
+                  items: LeaveType.values
+                      .map((t) => DropdownMenuItem(value: t, child: Text(t.label)))
+                      .toList(),
+                  onChanged: (t) => setState(() => _type = t),
+                  validator: (v) => v == null ? 'Please select a leave type' : null,
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -226,6 +227,27 @@ class _NewLeaveRequestScreenState extends ConsumerState<NewLeaveRequestScreen> {
                     if (v.trim().length < 10) return 'Reason should be at least 10 characters';
                     return null;
                   },
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => AppSnack.info(context, 'Attachments will be supported once the backend enables file uploads.'),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.gray.withValues(alpha: 0.5), style: BorderStyle.solid),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.attach_file, size: 18, color: AppColors.textSecondary),
+                        const SizedBox(width: 8),
+                        Text('Attach document (optional)', style: theme.textTheme.labelMedium?.copyWith(color: AppColors.textSecondary)),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 26),
                 PrimaryButton(

@@ -12,11 +12,11 @@ final tokenStorageProvider = Provider((ref) => TokenStorage(ref.read(secureStora
 final apiClientProvider = Provider((ref) => ApiClient(tokenStorage: ref.read(tokenStorageProvider)));
 final locationServiceProvider = Provider((ref) => LocationService());
 
-/// Emits the current time every 60 seconds so live clock widgets stay fresh.
+/// Emits the current time every 30 seconds so live clock widgets stay fresh.
 final clockProvider = StreamProvider<DateTime>((ref) {
   final controller = StreamController<DateTime>();
   controller.add(DateTime.now());
-  final timer = Timer.periodic(const Duration(seconds: 60), (_) => controller.add(DateTime.now()));
+  final timer = Timer.periodic(const Duration(seconds: 30), (_) => controller.add(DateTime.now()));
   ref.onDispose(() {
     timer.cancel();
     controller.close();

@@ -1,7 +1,7 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const String baseUrl = 'https://202.83.126.123:5000';
+  static const String baseUrl = 'https://server-circleseedserverexpress8009-r8faa-61063c-62-84-177-235.sslip.io';
   static const String authHeader = 'authorization';
   static const String clientTypeHeader = 'x-client-type';
   static const String refreshTokenHeader = 'x-refresh-token';
